@@ -1,4 +1,4 @@
-
+%{
 package Parser;
 import AnalizadorLexico.*;
 %}
@@ -197,6 +197,9 @@ expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_doun
 					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_dountil_etiqueta
 					|	error_dountil
 					;
+					
+etiqueta			: 	ID
+					;
 
 cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																				Main.polaca.addElementPolaca("");
@@ -209,9 +212,6 @@ cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Mai
 													Main.polaca.addElementPolaca("BF");
 													Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until");}
 					|	error_cuerpo_dountil
-					;
-					
-etiqueta			: 	ID
 					;
 
 cuerpo_dountil_etiqueta		:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
