@@ -1,0 +1,11 @@
+prueba_nombre_programa {
+	fun funcion1() : ui16 {
+		ui16 var1,var2;
+		var1 =: 4;
+		var2 =: 4;
+		if (var1 = var2) then{
+			var1 =: 5;
+		} end_if;
+		return (var1);
+	};
+}

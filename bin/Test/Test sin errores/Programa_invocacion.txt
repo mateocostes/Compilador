@@ -1,0 +1,7 @@
+prueba_nombre_programa {
+	fun funcion1(ui16 var1, f64 var2) : ui16 {
+		return (var2);
+	};
+	ui16 var3;
+	var3 =: funcion1(var3,var3);
+}

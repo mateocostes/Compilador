@@ -1,0 +1,7 @@
+prueba_lexico_id{	
+	variableconmasdevienticincocaracteres =: 2;
+	var_menos_25 =: 2;
+	var1 =: 2;
+	var|_error =: 2;
+	var_2 := 2;
+}

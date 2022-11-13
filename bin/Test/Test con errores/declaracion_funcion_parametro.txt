@@ -1,0 +1,7 @@
+programa1 {
+	fun funcion1 (, ui16 v2) : f64{
+		f64 var1;
+		var1 =: 4.1;
+		return(var1);
+	};
+}

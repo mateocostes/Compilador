@@ -1,0 +1,17 @@
+prueba_lexico_reserv{	
+	if (1<2) {
+		v1 =: 4;
+	}
+	else{
+		v2 =: v1+v2;
+	}
+	end_if;
+	
+	IF (1<2) {
+		v1 =: 4;
+	}
+	ELSE{
+		v2 =: v1+v2;
+	}
+	END_IF;
+}

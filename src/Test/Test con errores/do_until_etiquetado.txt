@@ -1,0 +1,6 @@
+programa1 {	
+	hola  do { 
+		out('hola');
+		break : hola;
+	} until (1<2) : (i =: i +1);
+}

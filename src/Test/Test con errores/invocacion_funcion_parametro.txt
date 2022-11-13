@@ -1,0 +1,3 @@
+programa1 {
+	v1=: funcion1(v1,);
+}

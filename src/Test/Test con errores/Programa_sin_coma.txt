@@ -1,0 +1,4 @@
+programa1 {
+	f64 var1
+	var =: 4;
+}

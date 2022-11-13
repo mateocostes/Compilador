@@ -1,0 +1,4 @@
+prueba_nombre_programa {
+	ui16 var1,var2;
+	var1 =: 4;
+}

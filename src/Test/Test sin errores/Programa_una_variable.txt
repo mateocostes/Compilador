@@ -1,0 +1,3 @@
+prueba_nombre_programa {
+	ui16 a;
+}

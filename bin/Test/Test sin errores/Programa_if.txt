@@ -1,0 +1,8 @@
+prueba_nombre_programa {
+	ui16 var1,var2;
+	var1 =: 4;
+	var2 =: 4;
+	if (var1 = var2) then{
+		var1 =: 4;
+	} end_if;
+} 

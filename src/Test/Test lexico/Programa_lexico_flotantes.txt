@@ -1,0 +1,6 @@
+prueba_lexico_flotantes{	
+	var_dbl_min_pos =: 2.2250738585072014D-308;
+	var_dbl_max_pos =: 1.7976931348623157D+308;
+	var_dbl_min_error_pos =: 2.3D-308;
+	var_dbl_max_error_pos =: 1.7976931348623160D+308;
+}

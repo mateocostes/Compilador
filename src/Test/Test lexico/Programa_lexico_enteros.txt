@@ -1,0 +1,6 @@
+prueba_lexico_enteros{
+	var_int_min =: 0;
+	var_int_max =: 65535;
+	var_int_min_error =: -1;
+	var_int_max_error =: 65536;
+}

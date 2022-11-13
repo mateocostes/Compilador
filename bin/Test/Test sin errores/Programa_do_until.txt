@@ -1,0 +1,6 @@
+prueba_nombre_programa {
+	do { 
+		var3 =: funcion1(var3,var3);	
+	}
+	until (var1 = var2) : (var3 =: funcion1(var3,var3));
+}

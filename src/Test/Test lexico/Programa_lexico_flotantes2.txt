@@ -1,0 +1,7 @@
+prueba_lexico_flotantes{	
+	var_dbl1 =: 2.1;
+	var_dbl2 =: 2.;
+	var_dbl3 =: .1;
+	var_dbl4 =: 2.1D-3;
+	var_dbl4 =: 2.1D+3;
+}

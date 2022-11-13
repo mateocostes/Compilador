@@ -1,0 +1,4 @@
+programa1 {
+	var1;
+	var =: 4;
+}
