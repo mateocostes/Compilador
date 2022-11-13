@@ -1,0 +1,40 @@
+prueba_nombre_programa {
+	if (a > c) then{
+		precio =: flete + costo * (1.5);
+	} end_if;
+}
+
+prueba_nombre_programa {
+	if (a > c) then{
+		precio =: flete + costo * (1.5);
+	} 
+	else {costo =: flete }
+	end_if;
+}
+
+prueba_nombre_programa {
+	if (a + b > c + 1) then{
+		a =: b + c;
+	} 
+	else{
+		a =: b + c;
+	}
+	end_if;
+}
+
+prueba_nombre_programa {
+	if (a + b <= c + 1) then{
+		a =: b + c;
+	} 
+	else{
+		a =: b + c;
+	}
+	end_if;
+}
+
+prueba_nombre_programa {
+    do { 
+        a =: b;
+    }
+    until (a = b) : (a =: a + 1);
+}

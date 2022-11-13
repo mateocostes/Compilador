@@ -192,35 +192,66 @@ invocacion_discard	: 	DISCARD ID '(' lista_parametros_reales ')' ';' {Main.estru
 					|	error_invocacion_discard
 					;
 					
-expresion_dountil	: 	DO '{' {Main.polaca.apilar(Main.polaca.getSize());}
-						bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
-																					Main.polaca.addElementPolaca("");
-																					Main.polaca.addElementPolaca("BI");}
+expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_dountil
+					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_dountil_etiqueta
+					|	error_dountil
+					;
+
+cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
+																				Main.polaca.addElementPolaca("");
+																				Main.polaca.addElementPolaca("BI");}
 						':' asignacion_do_until ';'  {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
+													if (Main.polaca.existeBreak()){ //Hay un Break
+														System.out.println("ENTRO");
+														Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 													Main.polaca.addElementPolaca(Main.polaca.desapilar());
 													Main.polaca.addElementPolaca("BF");
 													Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until");}
-					|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until con etiqueta");}
-					|	error_dountil
+					|	error_cuerpo_dountil
 					;
+					
+etiqueta			: 	ID
+					;
+
+cuerpo_dountil_etiqueta		:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
+																								Main.polaca.addElementPolaca("");
+																								Main.polaca.addElementPolaca("BI");}
+								':' asignacion_do_until ';' {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
+															if (Main.polaca.existeBreak()){ //Hay un Break
+																Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
+															Main.polaca.addElementPolaca(Main.polaca.desapilar());
+															Main.polaca.addElementPolaca("BF");
+															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until con etiqueta");}
+							|	error_cuerpo_dountil_etiqueta
+							;
+
 
 //SE PODRIA USAR ASIGNACION				
 asignacion_do_until :	'(' ID ASSIGN expresion ')' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una asignacion do until");}
 					|	error_asignacion_do_until
 					;
 					
-etiqueta			: 	ID
-					;
-
-bloque_de_sentencias_ejecutables 	:	ejecutables BREAK ';'
+bloque_de_sentencias_ejecutables 	:	ejecutables BREAK ';' {Main.polaca.contieneBreak();
+															Main.polaca.apilar(Main.polaca.getSize());
+															Main.polaca.addElementPolaca("");
+															Main.polaca.addElementPolaca("BI");}
 									|	ejecutables
-									|	BREAK ';'
+									|	BREAK ';' {Main.polaca.contieneBreak();
+												Main.polaca.apilar(Main.polaca.getSize());
+												Main.polaca.addElementPolaca("");
+												Main.polaca.addElementPolaca("BI");}
 									|	error_bloque_sent_ejecutables
 									;
 
 									
-bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables BREAK ':' etiqueta ';'
-											|	BREAK ':' etiqueta ';'
+bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables BREAK ':' etiqueta ';' {Main.polaca.contieneBreak();
+																					Main.polaca.apilar(Main.polaca.getSize());
+																					Main.polaca.addElementPolaca("");
+																					Main.polaca.addElementPolaca("BI");}
+											|	BREAK ':' etiqueta ';' {Main.polaca.contieneBreak();
+																		Main.polaca.apilar(Main.polaca.getSize());
+																		Main.polaca.addElementPolaca("");
+																		Main.polaca.addElementPolaca("BI");}
 											|	error_bloque_de_sentencias_ejecutables_etiqueta
 											;
 									
@@ -362,28 +393,34 @@ error_invocacion_discard	:	DISCARD '(' lista_parametros_reales ')' ';' {Main.err
 							;
 
 error_dountil	:	error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el do en la sentencia do_until");}
-				|	DO bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
-				|	DO '{' '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias ejecutables en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el until luego del bloque de sentencias en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' UNTIL ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la condicion luego del until en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion error asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la condicion en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la asignacion luego del ':' en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until  {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' para cerrar la sentencia do_until");}
-				|	':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la etiqueta en la sentencia do_until");}
 				|	etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la etiqueta en la sentencia do_until");}
-				|	etiqueta ':' '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el do en la sentencia do_until");}
-				|	etiqueta ':' DO bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
-				|	etiqueta ':' DO '{' '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias ejecutables en la sentencia do_until");}
-				|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
-				|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el until luego del bloque de sentencias en la sentencia do_until");}
-				|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "]Error sintactico : Falta la condicion luego del until en la sentencia do_until");}
-				|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la condicion en la sentencia do_until");}
-				|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la asignacion luego del ':' en la sentencia do_until");}
-				|	etiqueta ':' DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' para cerrar la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' UNTIL error ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Error en la condicion en la sentencia do_until");}
-				//|	DO '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' error ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Error en la asignacion en la sentencia do_until");}
+				|	':' DO 	{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la etiqueta antes de los ':' en la sentencia do_until");}
 				;
+
+
+//'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'					
+error_cuerpo_dountil	:	bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
+						|	'{' '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias ejecutables en la sentencia do_until");}
+						|	'{' bloque_de_sentencias_ejecutables UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
+						|	'{' bloque_de_sentencias_ejecutables '}' condicion ':' asignacion_do_until ';'  {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el until luego del bloque de sentencias en la sentencia do_until");}
+						|	'{' bloque_de_sentencias_ejecutables '}' UNTIL ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la condicion luego del until en la sentencia do_until");}
+						|	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion error asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la condicion en la sentencia do_until");}
+						//|	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la asignacion luego del ':' en la sentencia do_until");}
+						//|	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' para cerrar la sentencia do_until");}
+						;
+						
+
+//'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';'
+error_cuerpo_dountil_etiqueta	:	bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
+								|	'{' '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias ejecutables en la sentencia do_until");}
+								|	'{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
+								|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' asignacion_do_until ';'  {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el until luego del bloque de sentencias en la sentencia do_until con etiqueta");}
+								|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la condicion luego del until en la sentencia do_until con etiqueta");}
+								|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error asignacion_do_until ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la condicion en la sentencia do_until con etiqueta");}
+								//|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la asignacion luego del ':' en la sentencia do_until con etiqueta");}
+								//|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' para cerrar la sentencia do_until con etiqueta");}
+				
+
 
 error_asignacion_do_until	:	ID ASSIGN expresion ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la asignacion del do_until");}
 							|	'(' ASSIGN expresion ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el identificador a la izquierda de la asignacion del do_until");}

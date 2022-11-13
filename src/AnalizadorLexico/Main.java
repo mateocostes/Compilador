@@ -32,7 +32,9 @@ public class Main {
 		if (file != null) {
 			String direccion = file.getPath();*/
 			String direccion = "";
-			direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
+			//CAMBIAR DIRECCION
+			//Direccion Mateo
+			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
 			AnalizadorLexico analizadorLexico = new AnalizadorLexico(Codigo);
 	        Parser p = new Parser(analizadorLexico);

@@ -1,0 +1,6578 @@
+   0  $accept : programa $end
+
+   1  programa : ID conjunto_sentencias
+   2           | error_programa
+
+   3  conjunto_sentencias : '{' sentencias '}'
+   4                      | error_conjunto_sentencias
+
+   5  sentencias : declarativas ejecutables
+   6             | ejecutables declarativas
+   7             | declarativas
+   8             | ejecutables
+
+   9  declarativas : declarativas declarativa
+  10               | declarativa
+
+  11  ejecutables : ejecutables ejecutable
+  12              | ejecutable
+
+  13  declarativa : funcion ';'
+  14              | tipo lista_de_variables ';'
+  15              | error_declarativa
+
+  16  tipo : UI16
+  17       | F64
+
+  18  lista_de_variables : ID
+  19                     | lista_de_variables ',' ID
+  20                     | error_lista_de_variables
+
+  21  funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'
+  22          | error_funcion
+
+  23  lista_parametros : parametros ',' parametro
+  24                   | parametro
+  25                   |
+  26                   | error_lista_parametros
+
+  27  parametros : parametro
+
+  28  parametro : tipo ID
+  29            | error_parametro
+
+  30  cuerpo_funcion : sentencias retorno
+  31                 | retorno
+  32                 | error_bloque_funcion
+
+  33  retorno : RETURN ejecucion_retorno ';'
+  34          | error_retorno
+
+  35  ejecucion_retorno : condicion
+  36                    | '(' expresion ')'
+  37                    | error_retorno_expresion
+
+  38  condicion : '(' expresion comparador expresion ')'
+  39            | error_condicion
+
+  40  expresion : termino
+  41            | expresion '+' termino
+  42            | expresion '-' termino
+  43            | TOF64 '(' expresion ')'
+  44            | error_expresion
+
+  45  termino : termino '*' '(' factor ')'
+  46          | termino '/' '(' factor ')'
+  47          | factor
+  48          | error_termino
+
+  49  factor : CTE_INT
+  50         | CTE_DBL
+
+  51  $$1 :
+
+  52  factor : '-' CTE_INT $$1
+
+  53  $$2 :
+
+  54  factor : '-' CTE_DBL $$2
+  55         | ID
+  56         | invocacion
+
+  57  invocacion : ID '(' lista_parametros_reales ')'
+  58             | error_invocacion
+
+  59  lista_parametros_reales : parametros_reales ',' parametro_real
+  60                          | parametro_real
+  61                          |
+  62                          | error_lista_parametros_reales
+
+  63  parametros_reales : parametro_real
+
+  64  parametro_real : ID
+  65                 | CTE_INT
+  66                 | CTE_DBL
+
+  67  comparador : MENOR_IGUAL
+  68             | MAYOR_IGUAL
+  69             | '='
+  70             | '<'
+  71             | '>'
+  72             | DISTINTO
+
+  73  ejecutable : ejecutable_comun
+  74             | ejecutable_defer
+
+  75  ejecutable_comun : asignacion
+  76                   | seleccion
+  77                   | mensaje_pantalla
+  78                   | invocacion_discard
+  79                   | expresion_dountil
+
+  80  ejecutable_defer : DEFER ejecutable_comun
+
+  81  asignacion : ID ASSIGN expresion ';'
+  82             | error_asignacion
+
+  83  $$3 :
+
+  84  seleccion : IF condicion $$3 cuerpo_seleccion error_seleccion
+
+  85  cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' END_IF ';'
+
+  86  $$4 :
+
+  87  cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'
+
+  88  bloque_de_sent_ejecutables : ejecutables
+
+  89  mensaje_pantalla : OUT '(' CADENA ')' ';'
+  90                   | OUT '(' ')' ';'
+  91                   | error_mensaje_pantalla
+
+  92  invocacion_discard : DISCARD ID '(' lista_parametros_reales ')' ';'
+  93                     | error_invocacion_discard
+
+  94  $$5 :
+
+  95  expresion_dountil : DO $$5 cuerpo_dountil
+
+  96  $$6 :
+
+  97  expresion_dountil : etiqueta ':' DO $$6 cuerpo_dountil_etiqueta
+  98                    | error_dountil
+
+  99  $$7 :
+
+ 100  cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion $$7 ':' asignacion_do_until ';'
+ 101                 | error_cuerpo_dountil
+
+ 102  etiqueta : ID
+
+ 103  $$8 :
+
+ 104  cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion $$8 ':' asignacion_do_until ';'
+ 105                          | error_cuerpo_dountil_etiqueta
+
+ 106  asignacion_do_until : '(' ID ASSIGN expresion ')'
+ 107                      | error_asignacion_do_until
+
+ 108  bloque_de_sentencias_ejecutables : ejecutables BREAK ';'
+ 109                                   | ejecutables
+ 110                                   | BREAK ';'
+ 111                                   | error_bloque_sent_ejecutables
+
+ 112  bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' etiqueta ';'
+ 113                                            | BREAK ':' etiqueta ';'
+ 114                                            | error_bloque_de_sentencias_ejecutables_etiqueta
+
+ 115  error_programa : ID
+ 116                 | conjunto_sentencias
+
+ 117  error_conjunto_sentencias : '{' sentencias
+ 118                            | '{'
+ 119                            | '}'
+ 120                            | '{' '}'
+ 121                            | error sentencias
+ 122                            | error sentencias '}'
+
+ 123  error_declarativa : tipo lista_de_variables
+ 124                    | lista_de_variables ';'
+ 125                    | error tipo ';'
+ 126                    | funcion
+
+ 127  error_lista_de_variables : error ',' ID
+ 128                           | lista_de_variables ',' error
+
+ 129  error_funcion : ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'
+ 130                | FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'
+ 131                | FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'
+ 132                | FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion '}'
+ 133                | FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion '}'
+ 134                | FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion '}'
+ 135                | FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion '}'
+ 136                | FUN ID '(' lista_parametros ')' ':' tipo '{' '}'
+ 137                | FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion error
+
+ 138  error_lista_parametros : parametros ',' parametro ',' error
+ 139                         | ',' parametro
+ 140                         | parametros ','
+ 141                         | parametros parametro
+
+ 142  error_parametro : error ID
+ 143                  | tipo error
+
+ 144  error_bloque_funcion : error
+
+ 145  error_retorno : RETURN ejecucion_retorno
+ 146                | RETURN ';'
+
+ 147  error_retorno_expresion : expresion ')'
+ 148                          | '(' expresion
+ 149                          | '(' ')'
+
+ 150  error_condicion : expresion comparador expresion ')'
+ 151                  | '(' comparador expresion ')'
+ 152                  | '(' error expresion error ')'
+ 153                  | '(' expresion comparador ')'
+ 154                  | '(' expresion comparador expresion
+ 155                  | '(' error ')'
+ 156                  | expresion comparador expresion
+
+ 157  error_expresion : expresion '+' error
+ 158                  | expresion '-' error
+ 159                  | error '+' termino
+ 160                  | TOF64 error expresion ')'
+ 161                  | TOF64 '(' expresion error
+ 162                  | TOF64 '(' ')'
+
+ 163  error_termino : '*' factor
+ 164                | termino '*'
+ 165                | '/' factor
+ 166                | termino '/'
+
+ 167  error_invocacion : ID '(' lista_parametros_reales error
+
+ 168  error_lista_parametros_reales : parametros_reales ',' parametro_real ',' error
+ 169                                | ',' parametro_real
+ 170                                | parametros_reales ','
+ 171                                | parametros_reales parametro_real
+
+ 172  error_asignacion : ASSIGN expresion ';'
+ 173                   | ID expresion ';'
+ 174                   | ID ASSIGN ';'
+ 175                   | ID ASSIGN expresion error
+
+ 176  error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 177                  | IF condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 178                  | IF condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 179                  | IF condicion THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 180                  | IF condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 181                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 182                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';'
+ 183                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';'
+ 184                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';'
+ 185                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';'
+ 186                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF
+ 187                  | IF THEN '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 188                  | IF condicion '{' bloque_de_sent_ejecutables '}' END_IF ';'
+ 189                  | IF condicion THEN bloque_de_sent_ejecutables '}' END_IF ';'
+ 190                  | IF condicion THEN '{' '}' END_IF ';'
+ 191                  | IF condicion THEN '{' bloque_de_sent_ejecutables END_IF ';'
+ 192                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' ';'
+ 193                  | IF condicion THEN '{' bloque_de_sent_ejecutables '}' END_IF
+
+ 194  error_mensaje_pantalla : '(' CADENA ')' ';'
+ 195                         | OUT CADENA ')' ';'
+ 196                         | OUT '(' CADENA ';'
+ 197                         | OUT '(' CADENA ')'
+ 198                         | '(' ')' ';'
+ 199                         | OUT ')' ';'
+ 200                         | OUT '(' ';'
+ 201                         | OUT '(' ')'
+
+ 202  error_invocacion_discard : DISCARD '(' lista_parametros_reales ')' ';'
+ 203                           | DISCARD ID lista_parametros_reales ')' ';'
+ 204                           | DISCARD ID '(' lista_parametros_reales ';'
+ 205                           | DISCARD ID '(' lista_parametros_reales ')'
+
+ 206  error_dountil : error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'
+ 207                | etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';'
+ 208                | ':' DO
+
+ 209  error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'
+ 210                       | '{' '}' UNTIL condicion ':' asignacion_do_until ';'
+ 211                       | '{' bloque_de_sentencias_ejecutables UNTIL condicion ':' asignacion_do_until ';'
+ 212                       | '{' bloque_de_sentencias_ejecutables '}' condicion ':' asignacion_do_until ';'
+ 213                       | '{' bloque_de_sentencias_ejecutables '}' UNTIL ':' asignacion_do_until ';'
+ 214                       | '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion error asignacion_do_until ';'
+
+ 215  error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';'
+ 216                                | '{' '}' UNTIL condicion ':' asignacion_do_until ';'
+ 217                                | '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' asignacion_do_until ';'
+ 218                                | '{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' asignacion_do_until ';'
+ 219                                | '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' asignacion_do_until ';'
+ 220                                | '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error asignacion_do_until ';'
+
+ 221  error_asignacion_do_until : ID ASSIGN expresion ')'
+ 222                            | '(' ASSIGN expresion ')'
+ 223                            | '(' ID expresion ')'
+ 224                            | '(' ID ASSIGN ')'
+ 225                            | '(' ID ASSIGN expresion error
+
+ 226  error_bloque_sent_ejecutables : ';'
+ 227                                | ejecutables error ';'
+ 228                                | ejecutables BREAK
+ 229                                | BREAK
+
+ 230  error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables ':' etiqueta ';'
+ 231                                                  | ejecutables BREAK etiqueta ';'
+ 232                                                  | ejecutables BREAK ':' ';'
+ 233                                                  | ejecutables BREAK ':' etiqueta
+ 234                                                  | ':' etiqueta ';'
+ 235                                                  | BREAK etiqueta ';'
+ 236                                                  | BREAK ':' ';'
+ 237                                                  | BREAK ':' etiqueta
+
+state 0
+	$accept : . programa $end  (0)
+
+	error  shift 1
+	ID  shift 2
+	'{'  shift 3
+	'}'  shift 4
+	.  error
+
+	programa  goto 5
+	conjunto_sentencias  goto 6
+	error_programa  goto 7
+	error_conjunto_sentencias  goto 8
+
+
+state 1
+	error_conjunto_sentencias : error . sentencias  (121)
+	error_conjunto_sentencias : error . sentencias '}'  (122)
+
+	error  shift 9
+	ID  shift 10
+	IF  shift 11
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 22
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	error_funcion  goto 32
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 2
+	programa : ID . conjunto_sentencias  (1)
+	error_programa : ID .  (115)
+
+	error  shift 1
+	'{'  shift 3
+	'}'  shift 4
+	$end  reduce 115
+
+	conjunto_sentencias  goto 45
+	error_conjunto_sentencias  goto 8
+
+
+state 3
+	conjunto_sentencias : '{' . sentencias '}'  (3)
+	error_conjunto_sentencias : '{' . sentencias  (117)
+	error_conjunto_sentencias : '{' .  (118)
+	error_conjunto_sentencias : '{' . '}'  (120)
+
+	error  shift 9
+	ID  shift 10
+	IF  shift 11
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'}'  shift 46
+	'('  shift 20
+	':'  shift 21
+	$end  reduce 118
+
+	sentencias  goto 47
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	error_funcion  goto 32
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 4
+	error_conjunto_sentencias : '}' .  (119)
+
+	.  reduce 119
+
+
+state 5
+	$accept : programa . $end  (0)
+
+	$end  accept
+
+
+state 6
+	error_programa : conjunto_sentencias .  (116)
+
+	.  reduce 116
+
+
+state 7
+	programa : error_programa .  (2)
+
+	.  reduce 2
+
+
+state 8
+	conjunto_sentencias : error_conjunto_sentencias .  (4)
+
+	.  reduce 4
+
+
+state 9
+	error_declarativa : error . tipo ';'  (125)
+	error_lista_de_variables : error . ',' ID  (127)
+	error_dountil : error . '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'  (206)
+
+	UI16  shift 14
+	F64  shift 16
+	'{'  shift 48
+	','  shift 49
+	.  error
+
+	tipo  goto 50
+
+
+state 10
+	lista_de_variables : ID .  (18)
+	asignacion : ID . ASSIGN expresion ';'  (81)
+	etiqueta : ID .  (102)
+	error_funcion : ID . '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (129)
+	error_asignacion : ID . expresion ';'  (173)
+	error_asignacion : ID . ASSIGN ';'  (174)
+	error_asignacion : ID . ASSIGN expresion error  (175)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	ASSIGN  shift 55
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 60
+	DO  reduce 102
+	';'  reduce 18
+	','  reduce 18
+	':'  reduce 102
+
+	expresion  goto 61
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 11
+	seleccion : IF . condicion $$3 cuerpo_seleccion error_seleccion  (84)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 69
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 12
+	mensaje_pantalla : OUT . '(' CADENA ')' ';'  (89)
+	mensaje_pantalla : OUT . '(' ')' ';'  (90)
+	error_mensaje_pantalla : OUT . CADENA ')' ';'  (195)
+	error_mensaje_pantalla : OUT . '(' CADENA ';'  (196)
+	error_mensaje_pantalla : OUT . '(' CADENA ')'  (197)
+	error_mensaje_pantalla : OUT . ')' ';'  (199)
+	error_mensaje_pantalla : OUT . '(' ';'  (200)
+	error_mensaje_pantalla : OUT . '(' ')'  (201)
+
+	CADENA  shift 72
+	'('  shift 73
+	')'  shift 74
+	.  error
+
+
+state 13
+	funcion : FUN . ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN . '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (130)
+	error_funcion : FUN . ID lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (131)
+	error_funcion : FUN . ID '(' lista_parametros ':' tipo '{' cuerpo_funcion '}'  (132)
+	error_funcion : FUN . ID '(' lista_parametros ')' tipo '{' cuerpo_funcion '}'  (133)
+	error_funcion : FUN . ID '(' lista_parametros ')' ':' '{' cuerpo_funcion '}'  (134)
+	error_funcion : FUN . ID '(' lista_parametros ')' ':' tipo cuerpo_funcion '}'  (135)
+	error_funcion : FUN . ID '(' lista_parametros ')' ':' tipo '{' '}'  (136)
+	error_funcion : FUN . ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion error  (137)
+
+	ID  shift 75
+	'('  shift 76
+	.  error
+
+
+state 14
+	tipo : UI16 .  (16)
+
+	.  reduce 16
+
+
+state 15
+	error_asignacion : ASSIGN . expresion ';'  (172)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 77
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 16
+	tipo : F64 .  (17)
+
+	.  reduce 17
+
+
+state 17
+	invocacion_discard : DISCARD . ID '(' lista_parametros_reales ')' ';'  (92)
+	error_invocacion_discard : DISCARD . '(' lista_parametros_reales ')' ';'  (202)
+	error_invocacion_discard : DISCARD . ID lista_parametros_reales ')' ';'  (203)
+	error_invocacion_discard : DISCARD . ID '(' lista_parametros_reales ';'  (204)
+	error_invocacion_discard : DISCARD . ID '(' lista_parametros_reales ')'  (205)
+
+	ID  shift 78
+	'('  shift 79
+	.  error
+
+
+state 18
+	expresion_dountil : DO . $$5 cuerpo_dountil  (95)
+	$$5 : .  (94)
+
+	.  reduce 94
+
+	$$5  goto 80
+
+
+state 19
+	ejecutable_defer : DEFER . ejecutable_comun  (80)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutable_comun  goto 83
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 20
+	error_mensaje_pantalla : '(' . CADENA ')' ';'  (194)
+	error_mensaje_pantalla : '(' . ')' ';'  (198)
+
+	CADENA  shift 84
+	')'  shift 85
+	.  error
+
+
+state 21
+	error_dountil : ':' . DO  (208)
+
+	DO  shift 86
+	.  error
+
+
+state 22
+	error_conjunto_sentencias : error sentencias .  (121)
+	error_conjunto_sentencias : error sentencias . '}'  (122)
+
+	'}'  shift 87
+	$end  reduce 121
+
+
+state 23
+	sentencias : declarativas . ejecutables  (5)
+	sentencias : declarativas .  (7)
+	declarativas : declarativas . declarativa  (9)
+
+	error  shift 9
+	ID  shift 10
+	IF  shift 11
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	$end  reduce 7
+	RETURN  reduce 7
+	'}'  reduce 7
+
+	ejecutables  goto 88
+	declarativa  goto 89
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	error_funcion  goto 32
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 24
+	sentencias : ejecutables . declarativas  (6)
+	sentencias : ejecutables .  (8)
+	ejecutables : ejecutables . ejecutable  (11)
+
+	error  shift 9
+	ID  shift 10
+	IF  shift 11
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	$end  reduce 8
+	RETURN  reduce 8
+	'}'  reduce 8
+
+	declarativas  goto 90
+	declarativa  goto 25
+	ejecutable  goto 91
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	error_funcion  goto 32
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 25
+	declarativas : declarativa .  (10)
+
+	.  reduce 10
+
+
+state 26
+	ejecutables : ejecutable .  (12)
+
+	.  reduce 12
+
+
+state 27
+	declarativa : funcion . ';'  (13)
+	error_declarativa : funcion .  (126)
+
+	';'  shift 92
+	$end  reduce 126
+	error  reduce 126
+	ID  reduce 126
+	IF  reduce 126
+	RETURN  reduce 126
+	OUT  reduce 126
+	FUN  reduce 126
+	UI16  reduce 126
+	ASSIGN  reduce 126
+	F64  reduce 126
+	DISCARD  reduce 126
+	DO  reduce 126
+	DEFER  reduce 126
+	'}'  reduce 126
+	'('  reduce 126
+	':'  reduce 126
+
+
+state 28
+	declarativa : tipo . lista_de_variables ';'  (14)
+	error_declarativa : tipo . lista_de_variables  (123)
+
+	error  shift 93
+	ID  shift 94
+	.  error
+
+	lista_de_variables  goto 95
+	error_lista_de_variables  goto 31
+
+
+state 29
+	lista_de_variables : lista_de_variables . ',' ID  (19)
+	error_declarativa : lista_de_variables . ';'  (124)
+	error_lista_de_variables : lista_de_variables . ',' error  (128)
+
+	';'  shift 96
+	','  shift 97
+	.  error
+
+
+state 30
+	declarativa : error_declarativa .  (15)
+
+	.  reduce 15
+
+
+state 31
+	lista_de_variables : error_lista_de_variables .  (20)
+
+	.  reduce 20
+
+
+state 32
+	funcion : error_funcion .  (22)
+
+	.  reduce 22
+
+
+state 33
+	ejecutable : ejecutable_comun .  (73)
+
+	.  reduce 73
+
+
+state 34
+	ejecutable : ejecutable_defer .  (74)
+
+	.  reduce 74
+
+
+state 35
+	ejecutable_comun : asignacion .  (75)
+
+	.  reduce 75
+
+
+state 36
+	ejecutable_comun : seleccion .  (76)
+
+	.  reduce 76
+
+
+state 37
+	ejecutable_comun : mensaje_pantalla .  (77)
+
+	.  reduce 77
+
+
+state 38
+	ejecutable_comun : invocacion_discard .  (78)
+
+	.  reduce 78
+
+
+state 39
+	ejecutable_comun : expresion_dountil .  (79)
+
+	.  reduce 79
+
+
+state 40
+	asignacion : error_asignacion .  (82)
+
+	.  reduce 82
+
+
+state 41
+	mensaje_pantalla : error_mensaje_pantalla .  (91)
+
+	.  reduce 91
+
+
+state 42
+	invocacion_discard : error_invocacion_discard .  (93)
+
+	.  reduce 93
+
+
+state 43
+	expresion_dountil : etiqueta . ':' DO $$6 cuerpo_dountil_etiqueta  (97)
+	error_dountil : etiqueta . DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';'  (207)
+
+	DO  shift 98
+	':'  shift 99
+	.  error
+
+
+state 44
+	expresion_dountil : error_dountil .  (98)
+
+	.  reduce 98
+
+
+state 45
+	programa : ID conjunto_sentencias .  (1)
+
+	.  reduce 1
+
+
+state 46
+	error_conjunto_sentencias : '{' '}' .  (120)
+
+	.  reduce 120
+
+
+state 47
+	conjunto_sentencias : '{' sentencias . '}'  (3)
+	error_conjunto_sentencias : '{' sentencias .  (117)
+
+	'}'  shift 100
+	$end  reduce 117
+
+
+state 48
+	error_dountil : error '{' . bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'  (206)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 101
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	';'  shift 102
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 103
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+	bloque_de_sentencias_ejecutables  goto 104
+	error_bloque_sent_ejecutables  goto 105
+
+
+state 49
+	error_lista_de_variables : error ',' . ID  (127)
+
+	ID  shift 106
+	.  error
+
+
+state 50
+	error_declarativa : error tipo . ';'  (125)
+
+	';'  shift 107
+	.  error
+
+
+state 51
+	error_expresion : error . '+' termino  (159)
+
+	'+'  shift 108
+	.  error
+
+
+state 52
+	factor : ID .  (55)
+	invocacion : ID . '(' lista_parametros_reales ')'  (57)
+	error_invocacion : ID . '(' lista_parametros_reales error  (167)
+
+	'('  shift 109
+	error  reduce 55
+	THEN  reduce 55
+	MAYOR_IGUAL  reduce 55
+	MENOR_IGUAL  reduce 55
+	DISTINTO  reduce 55
+	'+'  reduce 55
+	'-'  reduce 55
+	'*'  reduce 55
+	'/'  reduce 55
+	'{'  reduce 55
+	'}'  reduce 55
+	';'  reduce 55
+	')'  reduce 55
+	':'  reduce 55
+	'='  reduce 55
+	'<'  reduce 55
+	'>'  reduce 55
+
+
+state 53
+	factor : CTE_INT .  (49)
+
+	.  reduce 49
+
+
+state 54
+	factor : CTE_DBL .  (50)
+
+	.  reduce 50
+
+
+state 55
+	asignacion : ID ASSIGN . expresion ';'  (81)
+	error_asignacion : ID ASSIGN . ';'  (174)
+	error_asignacion : ID ASSIGN . expresion error  (175)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	';'  shift 110
+	.  error
+
+	expresion  goto 111
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 56
+	expresion : TOF64 . '(' expresion ')'  (43)
+	error_expresion : TOF64 . error expresion ')'  (160)
+	error_expresion : TOF64 . '(' expresion error  (161)
+	error_expresion : TOF64 . '(' ')'  (162)
+
+	error  shift 112
+	'('  shift 113
+	.  error
+
+
+state 57
+	factor : '-' . CTE_INT $$1  (52)
+	factor : '-' . CTE_DBL $$2  (54)
+
+	CTE_INT  shift 114
+	CTE_DBL  shift 115
+	.  error
+
+
+state 58
+	error_termino : '*' . factor  (163)
+
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	.  error
+
+	factor  goto 116
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 59
+	error_termino : '/' . factor  (165)
+
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	.  error
+
+	factor  goto 117
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 60
+	error_funcion : ID '(' . lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (129)
+	lista_parametros : .  (25)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	','  shift 119
+	')'  reduce 25
+
+	tipo  goto 120
+	lista_parametros  goto 121
+	parametros  goto 122
+	parametro  goto 123
+	error_lista_parametros  goto 124
+	error_parametro  goto 125
+
+
+state 61
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion : ID expresion . ';'  (173)
+
+	'+'  shift 126
+	'-'  shift 127
+	';'  shift 128
+	.  error
+
+
+state 62
+	expresion : termino .  (40)
+	termino : termino . '*' '(' factor ')'  (45)
+	termino : termino . '/' '(' factor ')'  (46)
+	error_termino : termino . '*'  (164)
+	error_termino : termino . '/'  (166)
+
+	'*'  shift 129
+	'/'  shift 130
+	error  reduce 40
+	THEN  reduce 40
+	MAYOR_IGUAL  reduce 40
+	MENOR_IGUAL  reduce 40
+	DISTINTO  reduce 40
+	'+'  reduce 40
+	'-'  reduce 40
+	'{'  reduce 40
+	'}'  reduce 40
+	';'  reduce 40
+	')'  reduce 40
+	':'  reduce 40
+	'='  reduce 40
+	'<'  reduce 40
+	'>'  reduce 40
+
+
+state 63
+	expresion : error_expresion .  (44)
+
+	.  reduce 44
+
+
+state 64
+	termino : factor .  (47)
+
+	.  reduce 47
+
+
+state 65
+	termino : error_termino .  (48)
+
+	.  reduce 48
+
+
+state 66
+	factor : invocacion .  (56)
+
+	.  reduce 56
+
+
+state 67
+	invocacion : error_invocacion .  (58)
+
+	.  reduce 58
+
+
+state 68
+	condicion : '(' . expresion comparador expresion ')'  (38)
+	error_condicion : '(' . comparador expresion ')'  (151)
+	error_condicion : '(' . error expresion error ')'  (152)
+	error_condicion : '(' . expresion comparador ')'  (153)
+	error_condicion : '(' . expresion comparador expresion  (154)
+	error_condicion : '(' . error ')'  (155)
+
+	error  shift 131
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	MAYOR_IGUAL  shift 132
+	MENOR_IGUAL  shift 133
+	DISTINTO  shift 134
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'='  shift 135
+	'<'  shift 136
+	'>'  shift 137
+	.  error
+
+	expresion  goto 138
+	comparador  goto 139
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 69
+	seleccion : IF condicion . $$3 cuerpo_seleccion error_seleccion  (84)
+	$$3 : .  (83)
+
+	.  reduce 83
+
+	$$3  goto 140
+
+
+state 70
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_condicion : expresion . comparador expresion ')'  (150)
+	error_condicion : expresion . comparador expresion  (156)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	MAYOR_IGUAL  shift 132
+	MENOR_IGUAL  shift 133
+	DISTINTO  shift 134
+	'+'  shift 126
+	'-'  shift 127
+	'='  shift 135
+	'<'  shift 136
+	'>'  shift 137
+	.  error
+
+	comparador  goto 141
+
+
+state 71
+	condicion : error_condicion .  (39)
+
+	.  reduce 39
+
+
+state 72
+	error_mensaje_pantalla : OUT CADENA . ')' ';'  (195)
+
+	')'  shift 142
+	.  error
+
+
+state 73
+	mensaje_pantalla : OUT '(' . CADENA ')' ';'  (89)
+	mensaje_pantalla : OUT '(' . ')' ';'  (90)
+	error_mensaje_pantalla : OUT '(' . CADENA ';'  (196)
+	error_mensaje_pantalla : OUT '(' . CADENA ')'  (197)
+	error_mensaje_pantalla : OUT '(' . ';'  (200)
+	error_mensaje_pantalla : OUT '(' . ')'  (201)
+
+	CADENA  shift 143
+	';'  shift 144
+	')'  shift 145
+	.  error
+
+
+state 74
+	error_mensaje_pantalla : OUT ')' . ';'  (199)
+
+	';'  shift 146
+	.  error
+
+
+state 75
+	funcion : FUN ID . '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID . lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (131)
+	error_funcion : FUN ID . '(' lista_parametros ':' tipo '{' cuerpo_funcion '}'  (132)
+	error_funcion : FUN ID . '(' lista_parametros ')' tipo '{' cuerpo_funcion '}'  (133)
+	error_funcion : FUN ID . '(' lista_parametros ')' ':' '{' cuerpo_funcion '}'  (134)
+	error_funcion : FUN ID . '(' lista_parametros ')' ':' tipo cuerpo_funcion '}'  (135)
+	error_funcion : FUN ID . '(' lista_parametros ')' ':' tipo '{' '}'  (136)
+	error_funcion : FUN ID . '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion error  (137)
+	lista_parametros : .  (25)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	','  shift 119
+	'('  shift 147
+	')'  reduce 25
+
+	tipo  goto 120
+	lista_parametros  goto 148
+	parametros  goto 122
+	parametro  goto 123
+	error_lista_parametros  goto 124
+	error_parametro  goto 125
+
+
+state 76
+	error_funcion : FUN '(' . lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (130)
+	lista_parametros : .  (25)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	','  shift 119
+	')'  reduce 25
+
+	tipo  goto 120
+	lista_parametros  goto 149
+	parametros  goto 122
+	parametro  goto 123
+	error_lista_parametros  goto 124
+	error_parametro  goto 125
+
+
+state 77
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion : ASSIGN expresion . ';'  (172)
+
+	'+'  shift 126
+	'-'  shift 127
+	';'  shift 150
+	.  error
+
+
+state 78
+	invocacion_discard : DISCARD ID . '(' lista_parametros_reales ')' ';'  (92)
+	error_invocacion_discard : DISCARD ID . lista_parametros_reales ')' ';'  (203)
+	error_invocacion_discard : DISCARD ID . '(' lista_parametros_reales ';'  (204)
+	error_invocacion_discard : DISCARD ID . '(' lista_parametros_reales ')'  (205)
+	lista_parametros_reales : .  (61)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	','  shift 154
+	'('  shift 155
+	')'  reduce 61
+
+	lista_parametros_reales  goto 156
+	parametros_reales  goto 157
+	parametro_real  goto 158
+	error_lista_parametros_reales  goto 159
+
+
+state 79
+	error_invocacion_discard : DISCARD '(' . lista_parametros_reales ')' ';'  (202)
+	lista_parametros_reales : .  (61)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	','  shift 154
+	')'  reduce 61
+
+	lista_parametros_reales  goto 160
+	parametros_reales  goto 157
+	parametro_real  goto 158
+	error_lista_parametros_reales  goto 159
+
+
+state 80
+	expresion_dountil : DO $$5 . cuerpo_dountil  (95)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 101
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'{'  shift 161
+	';'  shift 102
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 103
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	cuerpo_dountil  goto 162
+	etiqueta  goto 43
+	error_dountil  goto 44
+	bloque_de_sentencias_ejecutables  goto 163
+	error_cuerpo_dountil  goto 164
+	error_bloque_sent_ejecutables  goto 105
+
+
+state 81
+	error_dountil : error . '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'  (206)
+
+	'{'  shift 48
+	.  error
+
+
+state 82
+	asignacion : ID . ASSIGN expresion ';'  (81)
+	etiqueta : ID .  (102)
+	error_asignacion : ID . expresion ';'  (173)
+	error_asignacion : ID . ASSIGN ';'  (174)
+	error_asignacion : ID . ASSIGN expresion error  (175)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	ASSIGN  shift 55
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	DO  reduce 102
+	':'  reduce 102
+
+	expresion  goto 61
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 83
+	ejecutable_defer : DEFER ejecutable_comun .  (80)
+
+	.  reduce 80
+
+
+state 84
+	error_mensaje_pantalla : '(' CADENA . ')' ';'  (194)
+
+	')'  shift 165
+	.  error
+
+
+state 85
+	error_mensaje_pantalla : '(' ')' . ';'  (198)
+
+	';'  shift 166
+	.  error
+
+
+state 86
+	error_dountil : ':' DO .  (208)
+
+	.  reduce 208
+
+
+state 87
+	error_conjunto_sentencias : error sentencias '}' .  (122)
+
+	.  reduce 122
+
+
+state 88
+	sentencias : declarativas ejecutables .  (5)
+	ejecutables : ejecutables . ejecutable  (11)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	$end  reduce 5
+	RETURN  reduce 5
+	'}'  reduce 5
+
+	ejecutable  goto 91
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 89
+	declarativas : declarativas declarativa .  (9)
+
+	.  reduce 9
+
+
+state 90
+	sentencias : ejecutables declarativas .  (6)
+	declarativas : declarativas . declarativa  (9)
+
+	error  shift 167
+	ID  shift 168
+	FUN  shift 13
+	UI16  shift 14
+	F64  shift 16
+	$end  reduce 6
+	RETURN  reduce 6
+	'}'  reduce 6
+
+	declarativa  goto 89
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	error_funcion  goto 32
+
+
+state 91
+	ejecutables : ejecutables ejecutable .  (11)
+
+	.  reduce 11
+
+
+state 92
+	declarativa : funcion ';' .  (13)
+
+	.  reduce 13
+
+
+state 93
+	error_lista_de_variables : error . ',' ID  (127)
+
+	','  shift 49
+	.  error
+
+
+state 94
+	lista_de_variables : ID .  (18)
+
+	.  reduce 18
+
+
+state 95
+	declarativa : tipo lista_de_variables . ';'  (14)
+	lista_de_variables : lista_de_variables . ',' ID  (19)
+	error_declarativa : tipo lista_de_variables .  (123)
+	error_lista_de_variables : lista_de_variables . ',' error  (128)
+
+	';'  shift 169
+	','  shift 97
+	$end  reduce 123
+	error  reduce 123
+	ID  reduce 123
+	IF  reduce 123
+	RETURN  reduce 123
+	OUT  reduce 123
+	FUN  reduce 123
+	UI16  reduce 123
+	ASSIGN  reduce 123
+	F64  reduce 123
+	DISCARD  reduce 123
+	DO  reduce 123
+	DEFER  reduce 123
+	'}'  reduce 123
+	'('  reduce 123
+	':'  reduce 123
+
+
+state 96
+	error_declarativa : lista_de_variables ';' .  (124)
+
+	.  reduce 124
+
+
+state 97
+	lista_de_variables : lista_de_variables ',' . ID  (19)
+	error_lista_de_variables : lista_de_variables ',' . error  (128)
+
+	error  shift 170
+	ID  shift 171
+	.  error
+
+
+state 98
+	error_dountil : etiqueta DO . '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';'  (207)
+
+	'{'  shift 172
+	.  error
+
+
+state 99
+	expresion_dountil : etiqueta ':' . DO $$6 cuerpo_dountil_etiqueta  (97)
+
+	DO  shift 173
+	.  error
+
+
+state 100
+	conjunto_sentencias : '{' sentencias '}' .  (3)
+
+	.  reduce 3
+
+
+state 101
+	bloque_de_sentencias_ejecutables : BREAK . ';'  (110)
+	error_bloque_sent_ejecutables : BREAK .  (229)
+
+	';'  shift 174
+	UNTIL  reduce 229
+	'}'  reduce 229
+
+
+state 102
+	error_bloque_sent_ejecutables : ';' .  (226)
+
+	.  reduce 226
+
+
+state 103
+	ejecutables : ejecutables . ejecutable  (11)
+	bloque_de_sentencias_ejecutables : ejecutables . BREAK ';'  (108)
+	bloque_de_sentencias_ejecutables : ejecutables .  (109)
+	error_bloque_sent_ejecutables : ejecutables . error ';'  (227)
+	error_bloque_sent_ejecutables : ejecutables . BREAK  (228)
+
+	error  shift 175
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 176
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	UNTIL  reduce 109
+	'}'  reduce 109
+
+	ejecutable  goto 91
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 104
+	error_dountil : error '{' bloque_de_sentencias_ejecutables . '}' UNTIL condicion ':' asignacion_do_until ';'  (206)
+
+	'}'  shift 177
+	.  error
+
+
+state 105
+	bloque_de_sentencias_ejecutables : error_bloque_sent_ejecutables .  (111)
+
+	.  reduce 111
+
+
+state 106
+	error_lista_de_variables : error ',' ID .  (127)
+
+	.  reduce 127
+
+
+state 107
+	error_declarativa : error tipo ';' .  (125)
+
+	.  reduce 125
+
+
+state 108
+	error_expresion : error '+' . termino  (159)
+
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	termino  goto 178
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 109
+	invocacion : ID '(' . lista_parametros_reales ')'  (57)
+	error_invocacion : ID '(' . lista_parametros_reales error  (167)
+	lista_parametros_reales : .  (61)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	','  shift 154
+	error  reduce 61
+	')'  reduce 61
+
+	lista_parametros_reales  goto 179
+	parametros_reales  goto 157
+	parametro_real  goto 158
+	error_lista_parametros_reales  goto 159
+
+
+state 110
+	error_asignacion : ID ASSIGN ';' .  (174)
+
+	.  reduce 174
+
+
+state 111
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	asignacion : ID ASSIGN expresion . ';'  (81)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion : ID ASSIGN expresion . error  (175)
+
+	error  shift 180
+	'+'  shift 126
+	'-'  shift 127
+	';'  shift 181
+	.  error
+
+
+state 112
+	error_expresion : TOF64 error . expresion ')'  (160)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 182
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 113
+	expresion : TOF64 '(' . expresion ')'  (43)
+	error_expresion : TOF64 '(' . expresion error  (161)
+	error_expresion : TOF64 '(' . ')'  (162)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	')'  shift 183
+	.  error
+
+	expresion  goto 184
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 114
+	factor : '-' CTE_INT . $$1  (52)
+	$$1 : .  (51)
+
+	.  reduce 51
+
+	$$1  goto 185
+
+
+state 115
+	factor : '-' CTE_DBL . $$2  (54)
+	$$2 : .  (53)
+
+	.  reduce 53
+
+	$$2  goto 186
+
+
+state 116
+	error_termino : '*' factor .  (163)
+
+	.  reduce 163
+
+
+state 117
+	error_termino : '/' factor .  (165)
+
+	.  reduce 165
+
+
+state 118
+	error_parametro : error . ID  (142)
+
+	ID  shift 187
+	.  error
+
+
+state 119
+	error_lista_parametros : ',' . parametro  (139)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	.  error
+
+	tipo  goto 120
+	parametro  goto 188
+	error_parametro  goto 125
+
+
+state 120
+	parametro : tipo . ID  (28)
+	error_parametro : tipo . error  (143)
+
+	error  shift 189
+	ID  shift 190
+	.  error
+
+
+state 121
+	error_funcion : ID '(' lista_parametros . ')' ':' tipo '{' cuerpo_funcion '}'  (129)
+
+	')'  shift 191
+	.  error
+
+
+state 122
+	lista_parametros : parametros . ',' parametro  (23)
+	error_lista_parametros : parametros . ',' parametro ',' error  (138)
+	error_lista_parametros : parametros . ','  (140)
+	error_lista_parametros : parametros . parametro  (141)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	','  shift 192
+	.  error
+
+	tipo  goto 120
+	parametro  goto 193
+	error_parametro  goto 125
+
+
+state 123
+	lista_parametros : parametro .  (24)
+	parametros : parametro .  (27)
+
+	error  reduce 27
+	UI16  reduce 27
+	F64  reduce 27
+	','  reduce 27
+	')'  reduce 24
+	':'  reduce 24
+
+
+state 124
+	lista_parametros : error_lista_parametros .  (26)
+
+	.  reduce 26
+
+
+state 125
+	parametro : error_parametro .  (29)
+
+	.  reduce 29
+
+
+state 126
+	expresion : expresion '+' . termino  (41)
+	error_expresion : expresion '+' . error  (157)
+
+	error  shift 194
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	termino  goto 195
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 127
+	expresion : expresion '-' . termino  (42)
+	error_expresion : expresion '-' . error  (158)
+
+	error  shift 196
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	termino  goto 197
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 128
+	error_asignacion : ID expresion ';' .  (173)
+
+	.  reduce 173
+
+
+state 129
+	termino : termino '*' . '(' factor ')'  (45)
+	error_termino : termino '*' .  (164)
+
+	'('  shift 198
+	error  reduce 164
+	THEN  reduce 164
+	MAYOR_IGUAL  reduce 164
+	MENOR_IGUAL  reduce 164
+	DISTINTO  reduce 164
+	'+'  reduce 164
+	'-'  reduce 164
+	'*'  reduce 164
+	'/'  reduce 164
+	'{'  reduce 164
+	'}'  reduce 164
+	';'  reduce 164
+	')'  reduce 164
+	':'  reduce 164
+	'='  reduce 164
+	'<'  reduce 164
+	'>'  reduce 164
+
+
+state 130
+	termino : termino '/' . '(' factor ')'  (46)
+	error_termino : termino '/' .  (166)
+
+	'('  shift 199
+	error  reduce 166
+	THEN  reduce 166
+	MAYOR_IGUAL  reduce 166
+	MENOR_IGUAL  reduce 166
+	DISTINTO  reduce 166
+	'+'  reduce 166
+	'-'  reduce 166
+	'*'  reduce 166
+	'/'  reduce 166
+	'{'  reduce 166
+	'}'  reduce 166
+	';'  reduce 166
+	')'  reduce 166
+	':'  reduce 166
+	'='  reduce 166
+	'<'  reduce 166
+	'>'  reduce 166
+
+
+state 131
+	error_condicion : '(' error . expresion error ')'  (152)
+	error_condicion : '(' error . ')'  (155)
+	error_expresion : error . '+' termino  (159)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'+'  shift 108
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	')'  shift 200
+	.  error
+
+	expresion  goto 201
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 132
+	comparador : MAYOR_IGUAL .  (68)
+
+	.  reduce 68
+
+
+state 133
+	comparador : MENOR_IGUAL .  (67)
+
+	.  reduce 67
+
+
+state 134
+	comparador : DISTINTO .  (72)
+
+	.  reduce 72
+
+
+state 135
+	comparador : '=' .  (69)
+
+	.  reduce 69
+
+
+state 136
+	comparador : '<' .  (70)
+
+	.  reduce 70
+
+
+state 137
+	comparador : '>' .  (71)
+
+	.  reduce 71
+
+
+state 138
+	condicion : '(' expresion . comparador expresion ')'  (38)
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_condicion : '(' expresion . comparador ')'  (153)
+	error_condicion : '(' expresion . comparador expresion  (154)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	MAYOR_IGUAL  shift 132
+	MENOR_IGUAL  shift 133
+	DISTINTO  shift 134
+	'+'  shift 126
+	'-'  shift 127
+	'='  shift 135
+	'<'  shift 136
+	'>'  shift 137
+	.  error
+
+	comparador  goto 202
+
+
+state 139
+	error_condicion : '(' comparador . expresion ')'  (151)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 203
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 140
+	seleccion : IF condicion $$3 . cuerpo_seleccion error_seleccion  (84)
+
+	THEN  shift 204
+	.  error
+
+	cuerpo_seleccion  goto 205
+
+
+state 141
+	error_condicion : expresion comparador . expresion ')'  (150)
+	error_condicion : expresion comparador . expresion  (156)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 206
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 142
+	error_mensaje_pantalla : OUT CADENA ')' . ';'  (195)
+
+	';'  shift 207
+	.  error
+
+
+state 143
+	mensaje_pantalla : OUT '(' CADENA . ')' ';'  (89)
+	error_mensaje_pantalla : OUT '(' CADENA . ';'  (196)
+	error_mensaje_pantalla : OUT '(' CADENA . ')'  (197)
+
+	';'  shift 208
+	')'  shift 209
+	.  error
+
+
+state 144
+	error_mensaje_pantalla : OUT '(' ';' .  (200)
+
+	.  reduce 200
+
+
+state 145
+	mensaje_pantalla : OUT '(' ')' . ';'  (90)
+	error_mensaje_pantalla : OUT '(' ')' .  (201)
+
+	';'  shift 210
+	$end  reduce 201
+	error  reduce 201
+	ID  reduce 201
+	IF  reduce 201
+	ELSE  reduce 201
+	END_IF  reduce 201
+	RETURN  reduce 201
+	OUT  reduce 201
+	FUN  reduce 201
+	UI16  reduce 201
+	ASSIGN  reduce 201
+	BREAK  reduce 201
+	F64  reduce 201
+	UNTIL  reduce 201
+	DISCARD  reduce 201
+	DO  reduce 201
+	DEFER  reduce 201
+	'}'  reduce 201
+	'('  reduce 201
+	':'  reduce 201
+
+
+state 146
+	error_mensaje_pantalla : OUT ')' ';' .  (199)
+
+	.  reduce 199
+
+
+state 147
+	funcion : FUN ID '(' . lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID '(' . lista_parametros ':' tipo '{' cuerpo_funcion '}'  (132)
+	error_funcion : FUN ID '(' . lista_parametros ')' tipo '{' cuerpo_funcion '}'  (133)
+	error_funcion : FUN ID '(' . lista_parametros ')' ':' '{' cuerpo_funcion '}'  (134)
+	error_funcion : FUN ID '(' . lista_parametros ')' ':' tipo cuerpo_funcion '}'  (135)
+	error_funcion : FUN ID '(' . lista_parametros ')' ':' tipo '{' '}'  (136)
+	error_funcion : FUN ID '(' . lista_parametros ')' ':' tipo '{' cuerpo_funcion error  (137)
+	lista_parametros : .  (25)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	','  shift 119
+	')'  reduce 25
+	':'  reduce 25
+
+	tipo  goto 120
+	lista_parametros  goto 211
+	parametros  goto 122
+	parametro  goto 123
+	error_lista_parametros  goto 124
+	error_parametro  goto 125
+
+
+state 148
+	error_funcion : FUN ID lista_parametros . ')' ':' tipo '{' cuerpo_funcion '}'  (131)
+
+	')'  shift 212
+	.  error
+
+
+state 149
+	error_funcion : FUN '(' lista_parametros . ')' ':' tipo '{' cuerpo_funcion '}'  (130)
+
+	')'  shift 213
+	.  error
+
+
+state 150
+	error_asignacion : ASSIGN expresion ';' .  (172)
+
+	.  reduce 172
+
+
+state 151
+	parametro_real : ID .  (64)
+
+	.  reduce 64
+
+
+state 152
+	parametro_real : CTE_INT .  (65)
+
+	.  reduce 65
+
+
+state 153
+	parametro_real : CTE_DBL .  (66)
+
+	.  reduce 66
+
+
+state 154
+	error_lista_parametros_reales : ',' . parametro_real  (169)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	.  error
+
+	parametro_real  goto 214
+
+
+state 155
+	invocacion_discard : DISCARD ID '(' . lista_parametros_reales ')' ';'  (92)
+	error_invocacion_discard : DISCARD ID '(' . lista_parametros_reales ';'  (204)
+	error_invocacion_discard : DISCARD ID '(' . lista_parametros_reales ')'  (205)
+	lista_parametros_reales : .  (61)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	','  shift 154
+	';'  reduce 61
+	')'  reduce 61
+
+	lista_parametros_reales  goto 215
+	parametros_reales  goto 157
+	parametro_real  goto 158
+	error_lista_parametros_reales  goto 159
+
+
+state 156
+	error_invocacion_discard : DISCARD ID lista_parametros_reales . ')' ';'  (203)
+
+	')'  shift 216
+	.  error
+
+
+state 157
+	lista_parametros_reales : parametros_reales . ',' parametro_real  (59)
+	error_lista_parametros_reales : parametros_reales . ',' parametro_real ',' error  (168)
+	error_lista_parametros_reales : parametros_reales . ','  (170)
+	error_lista_parametros_reales : parametros_reales . parametro_real  (171)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	','  shift 217
+	.  error
+
+	parametro_real  goto 218
+
+
+state 158
+	lista_parametros_reales : parametro_real .  (60)
+	parametros_reales : parametro_real .  (63)
+
+	error  reduce 60
+	ID  reduce 63
+	CTE_INT  reduce 63
+	CTE_DBL  reduce 63
+	';'  reduce 60
+	','  reduce 63
+	')'  reduce 60
+
+
+state 159
+	lista_parametros_reales : error_lista_parametros_reales .  (62)
+
+	.  reduce 62
+
+
+state 160
+	error_invocacion_discard : DISCARD '(' lista_parametros_reales . ')' ';'  (202)
+
+	')'  shift 219
+	.  error
+
+
+state 161
+	cuerpo_dountil : '{' . bloque_de_sentencias_ejecutables '}' UNTIL condicion $$7 ':' asignacion_do_until ';'  (100)
+	error_cuerpo_dountil : '{' . '}' UNTIL condicion ':' asignacion_do_until ';'  (210)
+	error_cuerpo_dountil : '{' . bloque_de_sentencias_ejecutables UNTIL condicion ':' asignacion_do_until ';'  (211)
+	error_cuerpo_dountil : '{' . bloque_de_sentencias_ejecutables '}' condicion ':' asignacion_do_until ';'  (212)
+	error_cuerpo_dountil : '{' . bloque_de_sentencias_ejecutables '}' UNTIL ':' asignacion_do_until ';'  (213)
+	error_cuerpo_dountil : '{' . bloque_de_sentencias_ejecutables '}' UNTIL condicion error asignacion_do_until ';'  (214)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 101
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'}'  shift 220
+	';'  shift 102
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 103
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+	bloque_de_sentencias_ejecutables  goto 221
+	error_bloque_sent_ejecutables  goto 105
+
+
+state 162
+	expresion_dountil : DO $$5 cuerpo_dountil .  (95)
+
+	.  reduce 95
+
+
+state 163
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables . '}' UNTIL condicion ':' asignacion_do_until ';'  (209)
+
+	'}'  shift 222
+	.  error
+
+
+state 164
+	cuerpo_dountil : error_cuerpo_dountil .  (101)
+
+	.  reduce 101
+
+
+state 165
+	error_mensaje_pantalla : '(' CADENA ')' . ';'  (194)
+
+	';'  shift 223
+	.  error
+
+
+state 166
+	error_mensaje_pantalla : '(' ')' ';' .  (198)
+
+	.  reduce 198
+
+
+state 167
+	error_declarativa : error . tipo ';'  (125)
+	error_lista_de_variables : error . ',' ID  (127)
+
+	UI16  shift 14
+	F64  shift 16
+	','  shift 49
+	.  error
+
+	tipo  goto 50
+
+
+state 168
+	lista_de_variables : ID .  (18)
+	error_funcion : ID . '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}'  (129)
+
+	'('  shift 60
+	';'  reduce 18
+	','  reduce 18
+
+
+state 169
+	declarativa : tipo lista_de_variables ';' .  (14)
+
+	.  reduce 14
+
+
+state 170
+	error_lista_de_variables : lista_de_variables ',' error .  (128)
+
+	.  reduce 128
+
+
+state 171
+	lista_de_variables : lista_de_variables ',' ID .  (19)
+
+	.  reduce 19
+
+
+state 172
+	error_dountil : etiqueta DO '{' . bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';'  (207)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 224
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 225
+	.  error
+
+	ejecutables  goto 226
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+	bloque_de_sentencias_ejecutables_etiqueta  goto 227
+	error_bloque_de_sentencias_ejecutables_etiqueta  goto 228
+
+
+state 173
+	expresion_dountil : etiqueta ':' DO . $$6 cuerpo_dountil_etiqueta  (97)
+	$$6 : .  (96)
+
+	.  reduce 96
+
+	$$6  goto 229
+
+
+state 174
+	bloque_de_sentencias_ejecutables : BREAK ';' .  (110)
+
+	.  reduce 110
+
+
+state 175
+	error_dountil : error . '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'  (206)
+	error_bloque_sent_ejecutables : ejecutables error . ';'  (227)
+
+	'{'  shift 48
+	';'  shift 230
+	.  error
+
+
+state 176
+	bloque_de_sentencias_ejecutables : ejecutables BREAK . ';'  (108)
+	error_bloque_sent_ejecutables : ejecutables BREAK .  (228)
+
+	';'  shift 231
+	UNTIL  reduce 228
+	'}'  reduce 228
+
+
+state 177
+	error_dountil : error '{' bloque_de_sentencias_ejecutables '}' . UNTIL condicion ':' asignacion_do_until ';'  (206)
+
+	UNTIL  shift 232
+	.  error
+
+
+state 178
+	termino : termino . '*' '(' factor ')'  (45)
+	termino : termino . '/' '(' factor ')'  (46)
+	error_expresion : error '+' termino .  (159)
+	error_termino : termino . '*'  (164)
+	error_termino : termino . '/'  (166)
+
+	'*'  shift 129
+	'/'  shift 130
+	error  reduce 159
+	THEN  reduce 159
+	MAYOR_IGUAL  reduce 159
+	MENOR_IGUAL  reduce 159
+	DISTINTO  reduce 159
+	'+'  reduce 159
+	'-'  reduce 159
+	'{'  reduce 159
+	'}'  reduce 159
+	';'  reduce 159
+	')'  reduce 159
+	':'  reduce 159
+	'='  reduce 159
+	'<'  reduce 159
+	'>'  reduce 159
+
+
+state 179
+	invocacion : ID '(' lista_parametros_reales . ')'  (57)
+	error_invocacion : ID '(' lista_parametros_reales . error  (167)
+
+	error  shift 233
+	')'  shift 234
+	.  error
+
+
+state 180
+	error_asignacion : ID ASSIGN expresion error .  (175)
+
+	.  reduce 175
+
+
+state 181
+	asignacion : ID ASSIGN expresion ';' .  (81)
+
+	.  reduce 81
+
+
+state 182
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_expresion : TOF64 error expresion . ')'  (160)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 235
+	.  error
+
+
+state 183
+	error_expresion : TOF64 '(' ')' .  (162)
+
+	.  reduce 162
+
+
+state 184
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	expresion : TOF64 '(' expresion . ')'  (43)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_expresion : TOF64 '(' expresion . error  (161)
+
+	error  shift 236
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 237
+	.  error
+
+
+state 185
+	factor : '-' CTE_INT $$1 .  (52)
+
+	.  reduce 52
+
+
+state 186
+	factor : '-' CTE_DBL $$2 .  (54)
+
+	.  reduce 54
+
+
+state 187
+	error_parametro : error ID .  (142)
+
+	.  reduce 142
+
+
+state 188
+	error_lista_parametros : ',' parametro .  (139)
+
+	.  reduce 139
+
+
+state 189
+	error_parametro : tipo error .  (143)
+
+	.  reduce 143
+
+
+state 190
+	parametro : tipo ID .  (28)
+
+	.  reduce 28
+
+
+state 191
+	error_funcion : ID '(' lista_parametros ')' . ':' tipo '{' cuerpo_funcion '}'  (129)
+
+	':'  shift 238
+	.  error
+
+
+state 192
+	lista_parametros : parametros ',' . parametro  (23)
+	error_lista_parametros : parametros ',' . parametro ',' error  (138)
+	error_lista_parametros : parametros ',' .  (140)
+
+	error  shift 118
+	UI16  shift 14
+	F64  shift 16
+	')'  reduce 140
+	':'  reduce 140
+
+	tipo  goto 120
+	parametro  goto 239
+	error_parametro  goto 125
+
+
+state 193
+	error_lista_parametros : parametros parametro .  (141)
+
+	.  reduce 141
+
+
+state 194
+	error_expresion : expresion '+' error .  (157)
+
+	.  reduce 157
+
+
+state 195
+	expresion : expresion '+' termino .  (41)
+	termino : termino . '*' '(' factor ')'  (45)
+	termino : termino . '/' '(' factor ')'  (46)
+	error_termino : termino . '*'  (164)
+	error_termino : termino . '/'  (166)
+
+	'*'  shift 129
+	'/'  shift 130
+	error  reduce 41
+	THEN  reduce 41
+	MAYOR_IGUAL  reduce 41
+	MENOR_IGUAL  reduce 41
+	DISTINTO  reduce 41
+	'+'  reduce 41
+	'-'  reduce 41
+	'{'  reduce 41
+	'}'  reduce 41
+	';'  reduce 41
+	')'  reduce 41
+	':'  reduce 41
+	'='  reduce 41
+	'<'  reduce 41
+	'>'  reduce 41
+
+
+state 196
+	error_expresion : expresion '-' error .  (158)
+
+	.  reduce 158
+
+
+state 197
+	expresion : expresion '-' termino .  (42)
+	termino : termino . '*' '(' factor ')'  (45)
+	termino : termino . '/' '(' factor ')'  (46)
+	error_termino : termino . '*'  (164)
+	error_termino : termino . '/'  (166)
+
+	'*'  shift 129
+	'/'  shift 130
+	error  reduce 42
+	THEN  reduce 42
+	MAYOR_IGUAL  reduce 42
+	MENOR_IGUAL  reduce 42
+	DISTINTO  reduce 42
+	'+'  reduce 42
+	'-'  reduce 42
+	'{'  reduce 42
+	'}'  reduce 42
+	';'  reduce 42
+	')'  reduce 42
+	':'  reduce 42
+	'='  reduce 42
+	'<'  reduce 42
+	'>'  reduce 42
+
+
+state 198
+	termino : termino '*' '(' . factor ')'  (45)
+
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	.  error
+
+	factor  goto 240
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 199
+	termino : termino '/' '(' . factor ')'  (46)
+
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	'-'  shift 57
+	.  error
+
+	factor  goto 241
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 200
+	error_condicion : '(' error ')' .  (155)
+
+	.  reduce 155
+
+
+state 201
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_condicion : '(' error expresion . error ')'  (152)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	error  shift 242
+	'+'  shift 126
+	'-'  shift 127
+	.  error
+
+
+state 202
+	condicion : '(' expresion comparador . expresion ')'  (38)
+	error_condicion : '(' expresion comparador . ')'  (153)
+	error_condicion : '(' expresion comparador . expresion  (154)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	')'  shift 243
+	.  error
+
+	expresion  goto 244
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 203
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_condicion : '(' comparador expresion . ')'  (151)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 245
+	.  error
+
+
+state 204
+	cuerpo_seleccion : THEN . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (85)
+	cuerpo_seleccion : THEN . '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+
+	'{'  shift 246
+	.  error
+
+
+state 205
+	seleccion : IF condicion $$3 cuerpo_seleccion . error_seleccion  (84)
+
+	IF  shift 247
+	.  error
+
+	error_seleccion  goto 248
+
+
+state 206
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_condicion : expresion comparador expresion . ')'  (150)
+	error_condicion : expresion comparador expresion .  (156)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 249
+	error  reduce 156
+	THEN  reduce 156
+	'{'  reduce 156
+	'}'  reduce 156
+	';'  reduce 156
+	':'  reduce 156
+
+
+state 207
+	error_mensaje_pantalla : OUT CADENA ')' ';' .  (195)
+
+	.  reduce 195
+
+
+state 208
+	error_mensaje_pantalla : OUT '(' CADENA ';' .  (196)
+
+	.  reduce 196
+
+
+state 209
+	mensaje_pantalla : OUT '(' CADENA ')' . ';'  (89)
+	error_mensaje_pantalla : OUT '(' CADENA ')' .  (197)
+
+	';'  shift 250
+	$end  reduce 197
+	error  reduce 197
+	ID  reduce 197
+	IF  reduce 197
+	ELSE  reduce 197
+	END_IF  reduce 197
+	RETURN  reduce 197
+	OUT  reduce 197
+	FUN  reduce 197
+	UI16  reduce 197
+	ASSIGN  reduce 197
+	BREAK  reduce 197
+	F64  reduce 197
+	UNTIL  reduce 197
+	DISCARD  reduce 197
+	DO  reduce 197
+	DEFER  reduce 197
+	'}'  reduce 197
+	'('  reduce 197
+	':'  reduce 197
+
+
+state 210
+	mensaje_pantalla : OUT '(' ')' ';' .  (90)
+
+	.  reduce 90
+
+
+state 211
+	funcion : FUN ID '(' lista_parametros . ')' ':' tipo '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID '(' lista_parametros . ':' tipo '{' cuerpo_funcion '}'  (132)
+	error_funcion : FUN ID '(' lista_parametros . ')' tipo '{' cuerpo_funcion '}'  (133)
+	error_funcion : FUN ID '(' lista_parametros . ')' ':' '{' cuerpo_funcion '}'  (134)
+	error_funcion : FUN ID '(' lista_parametros . ')' ':' tipo cuerpo_funcion '}'  (135)
+	error_funcion : FUN ID '(' lista_parametros . ')' ':' tipo '{' '}'  (136)
+	error_funcion : FUN ID '(' lista_parametros . ')' ':' tipo '{' cuerpo_funcion error  (137)
+
+	')'  shift 251
+	':'  shift 252
+	.  error
+
+
+state 212
+	error_funcion : FUN ID lista_parametros ')' . ':' tipo '{' cuerpo_funcion '}'  (131)
+
+	':'  shift 253
+	.  error
+
+
+state 213
+	error_funcion : FUN '(' lista_parametros ')' . ':' tipo '{' cuerpo_funcion '}'  (130)
+
+	':'  shift 254
+	.  error
+
+
+state 214
+	error_lista_parametros_reales : ',' parametro_real .  (169)
+
+	.  reduce 169
+
+
+state 215
+	invocacion_discard : DISCARD ID '(' lista_parametros_reales . ')' ';'  (92)
+	error_invocacion_discard : DISCARD ID '(' lista_parametros_reales . ';'  (204)
+	error_invocacion_discard : DISCARD ID '(' lista_parametros_reales . ')'  (205)
+
+	';'  shift 255
+	')'  shift 256
+	.  error
+
+
+state 216
+	error_invocacion_discard : DISCARD ID lista_parametros_reales ')' . ';'  (203)
+
+	';'  shift 257
+	.  error
+
+
+state 217
+	lista_parametros_reales : parametros_reales ',' . parametro_real  (59)
+	error_lista_parametros_reales : parametros_reales ',' . parametro_real ',' error  (168)
+	error_lista_parametros_reales : parametros_reales ',' .  (170)
+
+	ID  shift 151
+	CTE_INT  shift 152
+	CTE_DBL  shift 153
+	error  reduce 170
+	';'  reduce 170
+	')'  reduce 170
+
+	parametro_real  goto 258
+
+
+state 218
+	error_lista_parametros_reales : parametros_reales parametro_real .  (171)
+
+	.  reduce 171
+
+
+state 219
+	error_invocacion_discard : DISCARD '(' lista_parametros_reales ')' . ';'  (202)
+
+	';'  shift 259
+	.  error
+
+
+state 220
+	error_cuerpo_dountil : '{' '}' . UNTIL condicion ':' asignacion_do_until ';'  (210)
+
+	UNTIL  shift 260
+	.  error
+
+
+state 221
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables . '}' UNTIL condicion $$7 ':' asignacion_do_until ';'  (100)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables . UNTIL condicion ':' asignacion_do_until ';'  (211)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables . '}' condicion ':' asignacion_do_until ';'  (212)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables . '}' UNTIL ':' asignacion_do_until ';'  (213)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables . '}' UNTIL condicion error asignacion_do_until ';'  (214)
+
+	UNTIL  shift 261
+	'}'  shift 262
+	.  error
+
+
+state 222
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' . UNTIL condicion ':' asignacion_do_until ';'  (209)
+
+	UNTIL  shift 263
+	.  error
+
+
+state 223
+	error_mensaje_pantalla : '(' CADENA ')' ';' .  (194)
+
+	.  reduce 194
+
+
+state 224
+	bloque_de_sentencias_ejecutables_etiqueta : BREAK . ':' etiqueta ';'  (113)
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK . etiqueta ';'  (235)
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK . ':' ';'  (236)
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK . ':' etiqueta  (237)
+
+	ID  shift 264
+	':'  shift 265
+	.  error
+
+	etiqueta  goto 266
+
+
+state 225
+	error_dountil : ':' . DO  (208)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ':' . etiqueta ';'  (234)
+
+	ID  shift 264
+	DO  shift 86
+	.  error
+
+	etiqueta  goto 267
+
+
+state 226
+	ejecutables : ejecutables . ejecutable  (11)
+	bloque_de_sentencias_ejecutables_etiqueta : ejecutables . BREAK ':' etiqueta ';'  (112)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables . ':' etiqueta ';'  (230)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables . BREAK etiqueta ';'  (231)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables . BREAK ':' ';'  (232)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables . BREAK ':' etiqueta  (233)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 268
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 269
+	.  error
+
+	ejecutable  goto 91
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 227
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta . '}' UNTIL condicion ':' asignacion_do_until ';'  (207)
+
+	'}'  shift 270
+	.  error
+
+
+state 228
+	bloque_de_sentencias_ejecutables_etiqueta : error_bloque_de_sentencias_ejecutables_etiqueta .  (114)
+
+	.  reduce 114
+
+
+state 229
+	expresion_dountil : etiqueta ':' DO $$6 . cuerpo_dountil_etiqueta  (97)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 224
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'{'  shift 271
+	'('  shift 20
+	':'  shift 225
+	.  error
+
+	ejecutables  goto 226
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	cuerpo_dountil_etiqueta  goto 272
+	error_dountil  goto 44
+	bloque_de_sentencias_ejecutables_etiqueta  goto 273
+	error_cuerpo_dountil_etiqueta  goto 274
+	error_bloque_de_sentencias_ejecutables_etiqueta  goto 228
+
+
+state 230
+	error_bloque_sent_ejecutables : ejecutables error ';' .  (227)
+
+	.  reduce 227
+
+
+state 231
+	bloque_de_sentencias_ejecutables : ejecutables BREAK ';' .  (108)
+
+	.  reduce 108
+
+
+state 232
+	error_dountil : error '{' bloque_de_sentencias_ejecutables '}' UNTIL . condicion ':' asignacion_do_until ';'  (206)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 275
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 233
+	error_invocacion : ID '(' lista_parametros_reales error .  (167)
+
+	.  reduce 167
+
+
+state 234
+	invocacion : ID '(' lista_parametros_reales ')' .  (57)
+
+	.  reduce 57
+
+
+state 235
+	error_expresion : TOF64 error expresion ')' .  (160)
+
+	.  reduce 160
+
+
+state 236
+	error_expresion : TOF64 '(' expresion error .  (161)
+
+	.  reduce 161
+
+
+state 237
+	expresion : TOF64 '(' expresion ')' .  (43)
+
+	.  reduce 43
+
+
+state 238
+	error_funcion : ID '(' lista_parametros ')' ':' . tipo '{' cuerpo_funcion '}'  (129)
+
+	UI16  shift 14
+	F64  shift 16
+	.  error
+
+	tipo  goto 276
+
+
+state 239
+	lista_parametros : parametros ',' parametro .  (23)
+	error_lista_parametros : parametros ',' parametro . ',' error  (138)
+
+	','  shift 277
+	')'  reduce 23
+	':'  reduce 23
+
+
+state 240
+	termino : termino '*' '(' factor . ')'  (45)
+
+	')'  shift 278
+	.  error
+
+
+state 241
+	termino : termino '/' '(' factor . ')'  (46)
+
+	')'  shift 279
+	.  error
+
+
+state 242
+	error_condicion : '(' error expresion error . ')'  (152)
+
+	')'  shift 280
+	.  error
+
+
+state 243
+	error_condicion : '(' expresion comparador ')' .  (153)
+
+	.  reduce 153
+
+
+state 244
+	condicion : '(' expresion comparador expresion . ')'  (38)
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_condicion : '(' expresion comparador expresion .  (154)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 281
+	error  reduce 154
+	THEN  reduce 154
+	'{'  reduce 154
+	'}'  reduce 154
+	';'  reduce 154
+	':'  reduce 154
+
+
+state 245
+	error_condicion : '(' comparador expresion ')' .  (151)
+
+	.  reduce 151
+
+
+state 246
+	cuerpo_seleccion : THEN '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (85)
+	cuerpo_seleccion : THEN '{' . bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 283
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 247
+	error_seleccion : IF . THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+	error_seleccion : IF . condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+	error_seleccion : IF . condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+	error_seleccion : IF . condicion THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';'  (183)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+	error_seleccion : IF . THEN '{' bloque_de_sent_ejecutables '}' END_IF ';'  (187)
+	error_seleccion : IF . condicion '{' bloque_de_sent_ejecutables '}' END_IF ';'  (188)
+	error_seleccion : IF . condicion THEN bloque_de_sent_ejecutables '}' END_IF ';'  (189)
+	error_seleccion : IF . condicion THEN '{' '}' END_IF ';'  (190)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables END_IF ';'  (191)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' ';'  (192)
+	error_seleccion : IF . condicion THEN '{' bloque_de_sent_ejecutables '}' END_IF  (193)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	THEN  shift 284
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 285
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 248
+	seleccion : IF condicion $$3 cuerpo_seleccion error_seleccion .  (84)
+
+	.  reduce 84
+
+
+state 249
+	error_condicion : expresion comparador expresion ')' .  (150)
+
+	.  reduce 150
+
+
+state 250
+	mensaje_pantalla : OUT '(' CADENA ')' ';' .  (89)
+
+	.  reduce 89
+
+
+state 251
+	funcion : FUN ID '(' lista_parametros ')' . ':' tipo '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID '(' lista_parametros ')' . tipo '{' cuerpo_funcion '}'  (133)
+	error_funcion : FUN ID '(' lista_parametros ')' . ':' '{' cuerpo_funcion '}'  (134)
+	error_funcion : FUN ID '(' lista_parametros ')' . ':' tipo cuerpo_funcion '}'  (135)
+	error_funcion : FUN ID '(' lista_parametros ')' . ':' tipo '{' '}'  (136)
+	error_funcion : FUN ID '(' lista_parametros ')' . ':' tipo '{' cuerpo_funcion error  (137)
+
+	UI16  shift 14
+	F64  shift 16
+	':'  shift 286
+	.  error
+
+	tipo  goto 287
+
+
+state 252
+	error_funcion : FUN ID '(' lista_parametros ':' . tipo '{' cuerpo_funcion '}'  (132)
+
+	UI16  shift 14
+	F64  shift 16
+	.  error
+
+	tipo  goto 288
+
+
+state 253
+	error_funcion : FUN ID lista_parametros ')' ':' . tipo '{' cuerpo_funcion '}'  (131)
+
+	UI16  shift 14
+	F64  shift 16
+	.  error
+
+	tipo  goto 289
+
+
+state 254
+	error_funcion : FUN '(' lista_parametros ')' ':' . tipo '{' cuerpo_funcion '}'  (130)
+
+	UI16  shift 14
+	F64  shift 16
+	.  error
+
+	tipo  goto 290
+
+
+state 255
+	error_invocacion_discard : DISCARD ID '(' lista_parametros_reales ';' .  (204)
+
+	.  reduce 204
+
+
+state 256
+	invocacion_discard : DISCARD ID '(' lista_parametros_reales ')' . ';'  (92)
+	error_invocacion_discard : DISCARD ID '(' lista_parametros_reales ')' .  (205)
+
+	';'  shift 291
+	$end  reduce 205
+	error  reduce 205
+	ID  reduce 205
+	IF  reduce 205
+	ELSE  reduce 205
+	END_IF  reduce 205
+	RETURN  reduce 205
+	OUT  reduce 205
+	FUN  reduce 205
+	UI16  reduce 205
+	ASSIGN  reduce 205
+	BREAK  reduce 205
+	F64  reduce 205
+	UNTIL  reduce 205
+	DISCARD  reduce 205
+	DO  reduce 205
+	DEFER  reduce 205
+	'}'  reduce 205
+	'('  reduce 205
+	':'  reduce 205
+
+
+state 257
+	error_invocacion_discard : DISCARD ID lista_parametros_reales ')' ';' .  (203)
+
+	.  reduce 203
+
+
+state 258
+	lista_parametros_reales : parametros_reales ',' parametro_real .  (59)
+	error_lista_parametros_reales : parametros_reales ',' parametro_real . ',' error  (168)
+
+	','  shift 292
+	error  reduce 59
+	';'  reduce 59
+	')'  reduce 59
+
+
+state 259
+	error_invocacion_discard : DISCARD '(' lista_parametros_reales ')' ';' .  (202)
+
+	.  reduce 202
+
+
+state 260
+	error_cuerpo_dountil : '{' '}' UNTIL . condicion ':' asignacion_do_until ';'  (210)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 293
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 261
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables UNTIL . condicion ':' asignacion_do_until ';'  (211)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 294
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 262
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' . UNTIL condicion $$7 ':' asignacion_do_until ';'  (100)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' . condicion ':' asignacion_do_until ';'  (212)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' . UNTIL ':' asignacion_do_until ';'  (213)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' . UNTIL condicion error asignacion_do_until ';'  (214)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	UNTIL  shift 295
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 296
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 263
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' UNTIL . condicion ':' asignacion_do_until ';'  (209)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 297
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 264
+	etiqueta : ID .  (102)
+
+	.  reduce 102
+
+
+state 265
+	bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' . etiqueta ';'  (113)
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' . ';'  (236)
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' . etiqueta  (237)
+
+	ID  shift 264
+	';'  shift 298
+	.  error
+
+	etiqueta  goto 299
+
+
+state 266
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK etiqueta . ';'  (235)
+
+	';'  shift 300
+	.  error
+
+
+state 267
+	error_bloque_de_sentencias_ejecutables_etiqueta : ':' etiqueta . ';'  (234)
+
+	';'  shift 301
+	.  error
+
+
+state 268
+	bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK . ':' etiqueta ';'  (112)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK . etiqueta ';'  (231)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK . ':' ';'  (232)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK . ':' etiqueta  (233)
+
+	ID  shift 264
+	':'  shift 302
+	.  error
+
+	etiqueta  goto 303
+
+
+state 269
+	error_dountil : ':' . DO  (208)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables ':' . etiqueta ';'  (230)
+
+	ID  shift 264
+	DO  shift 86
+	.  error
+
+	etiqueta  goto 304
+
+
+state 270
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' . UNTIL condicion ':' asignacion_do_until ';'  (207)
+
+	UNTIL  shift 305
+	.  error
+
+
+state 271
+	cuerpo_dountil_etiqueta : '{' . bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion $$8 ':' asignacion_do_until ';'  (104)
+	error_cuerpo_dountil_etiqueta : '{' . '}' UNTIL condicion ':' asignacion_do_until ';'  (216)
+	error_cuerpo_dountil_etiqueta : '{' . bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' asignacion_do_until ';'  (217)
+	error_cuerpo_dountil_etiqueta : '{' . bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' asignacion_do_until ';'  (218)
+	error_cuerpo_dountil_etiqueta : '{' . bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' asignacion_do_until ';'  (219)
+	error_cuerpo_dountil_etiqueta : '{' . bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error asignacion_do_until ';'  (220)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	BREAK  shift 224
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'}'  shift 306
+	'('  shift 20
+	':'  shift 225
+	.  error
+
+	ejecutables  goto 226
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+	bloque_de_sentencias_ejecutables_etiqueta  goto 307
+	error_bloque_de_sentencias_ejecutables_etiqueta  goto 228
+
+
+state 272
+	expresion_dountil : etiqueta ':' DO $$6 cuerpo_dountil_etiqueta .  (97)
+
+	.  reduce 97
+
+
+state 273
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta . '}' UNTIL condicion ':' asignacion_do_until ';'  (215)
+
+	'}'  shift 308
+	.  error
+
+
+state 274
+	cuerpo_dountil_etiqueta : error_cuerpo_dountil_etiqueta .  (105)
+
+	.  reduce 105
+
+
+state 275
+	error_dountil : error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion . ':' asignacion_do_until ';'  (206)
+
+	':'  shift 309
+	.  error
+
+
+state 276
+	error_funcion : ID '(' lista_parametros ')' ':' tipo . '{' cuerpo_funcion '}'  (129)
+
+	'{'  shift 310
+	.  error
+
+
+state 277
+	error_lista_parametros : parametros ',' parametro ',' . error  (138)
+
+	error  shift 311
+	.  error
+
+
+state 278
+	termino : termino '*' '(' factor ')' .  (45)
+
+	.  reduce 45
+
+
+state 279
+	termino : termino '/' '(' factor ')' .  (46)
+
+	.  reduce 46
+
+
+state 280
+	error_condicion : '(' error expresion error ')' .  (152)
+
+	.  reduce 152
+
+
+state 281
+	condicion : '(' expresion comparador expresion ')' .  (38)
+
+	.  reduce 38
+
+
+state 282
+	ejecutables : ejecutables . ejecutable  (11)
+	bloque_de_sent_ejecutables : ejecutables .  (88)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	ELSE  reduce 88
+	END_IF  reduce 88
+	'}'  reduce 88
+
+	ejecutable  goto 91
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 283
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (85)
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables . '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+
+	'}'  shift 312
+	.  error
+
+
+state 284
+	error_seleccion : IF THEN . '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+	error_seleccion : IF THEN . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (187)
+
+	'{'  shift 313
+	.  error
+
+
+state 285
+	error_seleccion : IF condicion . '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+	error_seleccion : IF condicion . THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+	error_seleccion : IF condicion . THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';'  (183)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+	error_seleccion : IF condicion . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (188)
+	error_seleccion : IF condicion . THEN bloque_de_sent_ejecutables '}' END_IF ';'  (189)
+	error_seleccion : IF condicion . THEN '{' '}' END_IF ';'  (190)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables END_IF ';'  (191)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' ';'  (192)
+	error_seleccion : IF condicion . THEN '{' bloque_de_sent_ejecutables '}' END_IF  (193)
+
+	THEN  shift 314
+	'{'  shift 315
+	.  error
+
+
+state 286
+	funcion : FUN ID '(' lista_parametros ')' ':' . tipo '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' . '{' cuerpo_funcion '}'  (134)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' . tipo cuerpo_funcion '}'  (135)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' . tipo '{' '}'  (136)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' . tipo '{' cuerpo_funcion error  (137)
+
+	UI16  shift 14
+	F64  shift 16
+	'{'  shift 316
+	.  error
+
+	tipo  goto 317
+
+
+state 287
+	error_funcion : FUN ID '(' lista_parametros ')' tipo . '{' cuerpo_funcion '}'  (133)
+
+	'{'  shift 318
+	.  error
+
+
+state 288
+	error_funcion : FUN ID '(' lista_parametros ':' tipo . '{' cuerpo_funcion '}'  (132)
+
+	'{'  shift 319
+	.  error
+
+
+state 289
+	error_funcion : FUN ID lista_parametros ')' ':' tipo . '{' cuerpo_funcion '}'  (131)
+
+	'{'  shift 320
+	.  error
+
+
+state 290
+	error_funcion : FUN '(' lista_parametros ')' ':' tipo . '{' cuerpo_funcion '}'  (130)
+
+	'{'  shift 321
+	.  error
+
+
+state 291
+	invocacion_discard : DISCARD ID '(' lista_parametros_reales ')' ';' .  (92)
+
+	.  reduce 92
+
+
+state 292
+	error_lista_parametros_reales : parametros_reales ',' parametro_real ',' . error  (168)
+
+	error  shift 322
+	.  error
+
+
+state 293
+	error_cuerpo_dountil : '{' '}' UNTIL condicion . ':' asignacion_do_until ';'  (210)
+
+	':'  shift 323
+	.  error
+
+
+state 294
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables UNTIL condicion . ':' asignacion_do_until ';'  (211)
+
+	':'  shift 324
+	.  error
+
+
+state 295
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL . condicion $$7 ':' asignacion_do_until ';'  (100)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL . ':' asignacion_do_until ';'  (213)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL . condicion error asignacion_do_until ';'  (214)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	':'  shift 325
+	.  error
+
+	condicion  goto 326
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 296
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' condicion . ':' asignacion_do_until ';'  (212)
+
+	':'  shift 327
+	.  error
+
+
+state 297
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' UNTIL condicion . ':' asignacion_do_until ';'  (209)
+
+	':'  shift 328
+	.  error
+
+
+state 298
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' ';' .  (236)
+
+	.  reduce 236
+
+
+state 299
+	bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' etiqueta . ';'  (113)
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' etiqueta .  (237)
+
+	';'  shift 329
+	UNTIL  reduce 237
+	'}'  reduce 237
+
+
+state 300
+	error_bloque_de_sentencias_ejecutables_etiqueta : BREAK etiqueta ';' .  (235)
+
+	.  reduce 235
+
+
+state 301
+	error_bloque_de_sentencias_ejecutables_etiqueta : ':' etiqueta ';' .  (234)
+
+	.  reduce 234
+
+
+state 302
+	bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' . etiqueta ';'  (112)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' . ';'  (232)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' . etiqueta  (233)
+
+	ID  shift 264
+	';'  shift 330
+	.  error
+
+	etiqueta  goto 331
+
+
+state 303
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK etiqueta . ';'  (231)
+
+	';'  shift 332
+	.  error
+
+
+state 304
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables ':' etiqueta . ';'  (230)
+
+	';'  shift 333
+	.  error
+
+
+state 305
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL . condicion ':' asignacion_do_until ';'  (207)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 334
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 306
+	error_cuerpo_dountil_etiqueta : '{' '}' . UNTIL condicion ':' asignacion_do_until ';'  (216)
+
+	UNTIL  shift 335
+	.  error
+
+
+state 307
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta . '}' UNTIL condicion $$8 ':' asignacion_do_until ';'  (104)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta . UNTIL condicion ':' asignacion_do_until ';'  (217)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta . '}' condicion ':' asignacion_do_until ';'  (218)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta . '}' UNTIL ':' asignacion_do_until ';'  (219)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta . '}' UNTIL condicion error asignacion_do_until ';'  (220)
+
+	UNTIL  shift 336
+	'}'  shift 337
+	.  error
+
+
+state 308
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' . UNTIL condicion ':' asignacion_do_until ';'  (215)
+
+	UNTIL  shift 338
+	.  error
+
+
+state 309
+	error_dountil : error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' . asignacion_do_until ';'  (206)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 341
+	error_asignacion_do_until  goto 342
+
+
+state 310
+	error_funcion : ID '(' lista_parametros ')' ':' tipo '{' . cuerpo_funcion '}'  (129)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 346
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 311
+	error_lista_parametros : parametros ',' parametro ',' error .  (138)
+
+	.  reduce 138
+
+
+state 312
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (85)
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' . $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+	$$4 : .  (86)
+
+	END_IF  shift 350
+	ELSE  reduce 86
+
+	$$4  goto 351
+
+
+state 313
+	error_seleccion : IF THEN '{' . bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+	error_seleccion : IF THEN '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (187)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 352
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 314
+	error_seleccion : IF condicion THEN . bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+	error_seleccion : IF condicion THEN . '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';'  (183)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+	error_seleccion : IF condicion THEN . bloque_de_sent_ejecutables '}' END_IF ';'  (189)
+	error_seleccion : IF condicion THEN . '{' '}' END_IF ';'  (190)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables END_IF ';'  (191)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' ';'  (192)
+	error_seleccion : IF condicion THEN . '{' bloque_de_sent_ejecutables '}' END_IF  (193)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'{'  shift 353
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 354
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 315
+	error_seleccion : IF condicion '{' . bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+	error_seleccion : IF condicion '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (188)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 355
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 316
+	error_funcion : FUN ID '(' lista_parametros ')' ':' '{' . cuerpo_funcion '}'  (134)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 356
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 317
+	funcion : FUN ID '(' lista_parametros ')' ':' tipo . '{' cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo . cuerpo_funcion '}'  (135)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo . '{' '}'  (136)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo . '{' cuerpo_funcion error  (137)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'{'  shift 357
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 358
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 318
+	error_funcion : FUN ID '(' lista_parametros ')' tipo '{' . cuerpo_funcion '}'  (133)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 359
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 319
+	error_funcion : FUN ID '(' lista_parametros ':' tipo '{' . cuerpo_funcion '}'  (132)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 360
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 320
+	error_funcion : FUN ID lista_parametros ')' ':' tipo '{' . cuerpo_funcion '}'  (131)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 361
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 321
+	error_funcion : FUN '(' lista_parametros ')' ':' tipo '{' . cuerpo_funcion '}'  (130)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 362
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 322
+	error_lista_parametros_reales : parametros_reales ',' parametro_real ',' error .  (168)
+
+	.  reduce 168
+
+
+state 323
+	error_cuerpo_dountil : '{' '}' UNTIL condicion ':' . asignacion_do_until ';'  (210)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 363
+	error_asignacion_do_until  goto 342
+
+
+state 324
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables UNTIL condicion ':' . asignacion_do_until ';'  (211)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 364
+	error_asignacion_do_until  goto 342
+
+
+state 325
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL ':' . asignacion_do_until ';'  (213)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 365
+	error_asignacion_do_until  goto 342
+
+
+state 326
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion . $$7 ':' asignacion_do_until ';'  (100)
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion . error asignacion_do_until ';'  (214)
+	$$7 : .  (99)
+
+	error  shift 366
+	':'  reduce 99
+
+	$$7  goto 367
+
+
+state 327
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' condicion ':' . asignacion_do_until ';'  (212)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 368
+	error_asignacion_do_until  goto 342
+
+
+state 328
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' . asignacion_do_until ';'  (209)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 369
+	error_asignacion_do_until  goto 342
+
+
+state 329
+	bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' etiqueta ';' .  (113)
+
+	.  reduce 113
+
+
+state 330
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' ';' .  (232)
+
+	.  reduce 232
+
+
+state 331
+	bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' etiqueta . ';'  (112)
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' etiqueta .  (233)
+
+	';'  shift 370
+	UNTIL  reduce 233
+	'}'  reduce 233
+
+
+state 332
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK etiqueta ';' .  (231)
+
+	.  reduce 231
+
+
+state 333
+	error_bloque_de_sentencias_ejecutables_etiqueta : ejecutables ':' etiqueta ';' .  (230)
+
+	.  reduce 230
+
+
+state 334
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion . ':' asignacion_do_until ';'  (207)
+
+	':'  shift 371
+	.  error
+
+
+state 335
+	error_cuerpo_dountil_etiqueta : '{' '}' UNTIL . condicion ':' asignacion_do_until ';'  (216)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 372
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 336
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL . condicion ':' asignacion_do_until ';'  (217)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 373
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 337
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' . UNTIL condicion $$8 ':' asignacion_do_until ';'  (104)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' . condicion ':' asignacion_do_until ';'  (218)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' . UNTIL ':' asignacion_do_until ';'  (219)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' . UNTIL condicion error asignacion_do_until ';'  (220)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	UNTIL  shift 374
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 375
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 338
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL . condicion ':' asignacion_do_until ';'  (215)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	.  error
+
+	condicion  goto 376
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 339
+	error_asignacion_do_until : ID . ASSIGN expresion ')'  (221)
+
+	ASSIGN  shift 377
+	.  error
+
+
+state 340
+	asignacion_do_until : '(' . ID ASSIGN expresion ')'  (106)
+	error_asignacion_do_until : '(' . ASSIGN expresion ')'  (222)
+	error_asignacion_do_until : '(' . ID expresion ')'  (223)
+	error_asignacion_do_until : '(' . ID ASSIGN ')'  (224)
+	error_asignacion_do_until : '(' . ID ASSIGN expresion error  (225)
+
+	ID  shift 378
+	ASSIGN  shift 379
+	.  error
+
+
+state 341
+	error_dountil : error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until . ';'  (206)
+
+	';'  shift 380
+	.  error
+
+
+state 342
+	asignacion_do_until : error_asignacion_do_until .  (107)
+
+	.  reduce 107
+
+
+state 343
+	error_declarativa : error . tipo ';'  (125)
+	error_lista_de_variables : error . ',' ID  (127)
+	error_bloque_funcion : error .  (144)
+	error_dountil : error . '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';'  (206)
+
+	UI16  shift 14
+	F64  shift 16
+	'{'  shift 48
+	','  shift 49
+	error  reduce 144
+	'}'  reduce 144
+
+	tipo  goto 50
+
+
+state 344
+	retorno : RETURN . ejecucion_retorno ';'  (33)
+	error_retorno : RETURN . ejecucion_retorno  (145)
+	error_retorno : RETURN . ';'  (146)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	';'  shift 381
+	'('  shift 382
+	.  error
+
+	ejecucion_retorno  goto 383
+	condicion  goto 384
+	expresion  goto 385
+	error_retorno_expresion  goto 386
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 345
+	cuerpo_funcion : sentencias . retorno  (30)
+
+	RETURN  shift 344
+	.  error
+
+	retorno  goto 387
+	error_retorno  goto 349
+
+
+state 346
+	error_funcion : ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion . '}'  (129)
+
+	'}'  shift 388
+	.  error
+
+
+state 347
+	cuerpo_funcion : retorno .  (31)
+
+	.  reduce 31
+
+
+state 348
+	cuerpo_funcion : error_bloque_funcion .  (32)
+
+	.  reduce 32
+
+
+state 349
+	retorno : error_retorno .  (34)
+
+	.  reduce 34
+
+
+state 350
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (85)
+
+	';'  shift 389
+	.  error
+
+
+state 351
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 . ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+
+	ELSE  shift 390
+	.  error
+
+
+state 352
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables . '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (187)
+
+	'}'  shift 391
+	.  error
+
+
+state 353
+	error_seleccion : IF condicion THEN '{' . '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';'  (183)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+	error_seleccion : IF condicion THEN '{' . '}' END_IF ';'  (190)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables END_IF ';'  (191)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' ';'  (192)
+	error_seleccion : IF condicion THEN '{' . bloque_de_sent_ejecutables '}' END_IF  (193)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'}'  shift 392
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 393
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 354
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables . '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables . '}' END_IF ';'  (189)
+
+	'}'  shift 394
+	.  error
+
+
+state 355
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables . '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (188)
+
+	'}'  shift 395
+	.  error
+
+
+state 356
+	error_funcion : FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion . '}'  (134)
+
+	'}'  shift 396
+	.  error
+
+
+state 357
+	funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' . cuerpo_funcion '}'  (21)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' . '}'  (136)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' . cuerpo_funcion error  (137)
+
+	error  shift 343
+	ID  shift 10
+	IF  shift 11
+	RETURN  shift 344
+	OUT  shift 12
+	FUN  shift 13
+	UI16  shift 14
+	ASSIGN  shift 15
+	F64  shift 16
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'}'  shift 397
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	sentencias  goto 345
+	declarativas  goto 23
+	ejecutables  goto 24
+	declarativa  goto 25
+	ejecutable  goto 26
+	funcion  goto 27
+	tipo  goto 28
+	lista_de_variables  goto 29
+	error_declarativa  goto 30
+	error_lista_de_variables  goto 31
+	cuerpo_funcion  goto 398
+	error_funcion  goto 32
+	retorno  goto 347
+	error_bloque_funcion  goto 348
+	error_retorno  goto 349
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 358
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion . '}'  (135)
+
+	'}'  shift 399
+	.  error
+
+
+state 359
+	error_funcion : FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion . '}'  (133)
+
+	'}'  shift 400
+	.  error
+
+
+state 360
+	error_funcion : FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion . '}'  (132)
+
+	'}'  shift 401
+	.  error
+
+
+state 361
+	error_funcion : FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion . '}'  (131)
+
+	'}'  shift 402
+	.  error
+
+
+state 362
+	error_funcion : FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion . '}'  (130)
+
+	'}'  shift 403
+	.  error
+
+
+state 363
+	error_cuerpo_dountil : '{' '}' UNTIL condicion ':' asignacion_do_until . ';'  (210)
+
+	';'  shift 404
+	.  error
+
+
+state 364
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables UNTIL condicion ':' asignacion_do_until . ';'  (211)
+
+	';'  shift 405
+	.  error
+
+
+state 365
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL ':' asignacion_do_until . ';'  (213)
+
+	';'  shift 406
+	.  error
+
+
+state 366
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion error . asignacion_do_until ';'  (214)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 407
+	error_asignacion_do_until  goto 342
+
+
+state 367
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion $$7 . ':' asignacion_do_until ';'  (100)
+
+	':'  shift 408
+	.  error
+
+
+state 368
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' condicion ':' asignacion_do_until . ';'  (212)
+
+	';'  shift 409
+	.  error
+
+
+state 369
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until . ';'  (209)
+
+	';'  shift 410
+	.  error
+
+
+state 370
+	bloque_de_sentencias_ejecutables_etiqueta : ejecutables BREAK ':' etiqueta ';' .  (112)
+
+	.  reduce 112
+
+
+state 371
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' . asignacion_do_until ';'  (207)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 411
+	error_asignacion_do_until  goto 342
+
+
+state 372
+	error_cuerpo_dountil_etiqueta : '{' '}' UNTIL condicion . ':' asignacion_do_until ';'  (216)
+
+	':'  shift 412
+	.  error
+
+
+state 373
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion . ':' asignacion_do_until ';'  (217)
+
+	':'  shift 413
+	.  error
+
+
+state 374
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL . condicion $$8 ':' asignacion_do_until ';'  (104)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL . ':' asignacion_do_until ';'  (219)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL . condicion error asignacion_do_until ';'  (220)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	'('  shift 68
+	':'  shift 414
+	.  error
+
+	condicion  goto 415
+	expresion  goto 70
+	error_condicion  goto 71
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 375
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion . ':' asignacion_do_until ';'  (218)
+
+	':'  shift 416
+	.  error
+
+
+state 376
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion . ':' asignacion_do_until ';'  (215)
+
+	':'  shift 417
+	.  error
+
+
+state 377
+	error_asignacion_do_until : ID ASSIGN . expresion ')'  (221)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 418
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 378
+	asignacion_do_until : '(' ID . ASSIGN expresion ')'  (106)
+	error_asignacion_do_until : '(' ID . expresion ')'  (223)
+	error_asignacion_do_until : '(' ID . ASSIGN ')'  (224)
+	error_asignacion_do_until : '(' ID . ASSIGN expresion error  (225)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	ASSIGN  shift 419
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 420
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 379
+	error_asignacion_do_until : '(' ASSIGN . expresion ')'  (222)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	.  error
+
+	expresion  goto 421
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 380
+	error_dountil : error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';' .  (206)
+
+	.  reduce 206
+
+
+state 381
+	error_retorno : RETURN ';' .  (146)
+
+	.  reduce 146
+
+
+state 382
+	ejecucion_retorno : '(' . expresion ')'  (36)
+	condicion : '(' . expresion comparador expresion ')'  (38)
+	error_retorno_expresion : '(' . expresion  (148)
+	error_retorno_expresion : '(' . ')'  (149)
+	error_condicion : '(' . comparador expresion ')'  (151)
+	error_condicion : '(' . error expresion error ')'  (152)
+	error_condicion : '(' . expresion comparador ')'  (153)
+	error_condicion : '(' . expresion comparador expresion  (154)
+	error_condicion : '(' . error ')'  (155)
+
+	error  shift 131
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	MAYOR_IGUAL  shift 132
+	MENOR_IGUAL  shift 133
+	DISTINTO  shift 134
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	')'  shift 422
+	'='  shift 135
+	'<'  shift 136
+	'>'  shift 137
+	.  error
+
+	expresion  goto 423
+	comparador  goto 139
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 383
+	retorno : RETURN ejecucion_retorno . ';'  (33)
+	error_retorno : RETURN ejecucion_retorno .  (145)
+
+	';'  shift 424
+	error  reduce 145
+	'}'  reduce 145
+
+
+state 384
+	ejecucion_retorno : condicion .  (35)
+
+	.  reduce 35
+
+
+state 385
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_retorno_expresion : expresion . ')'  (147)
+	error_condicion : expresion . comparador expresion ')'  (150)
+	error_condicion : expresion . comparador expresion  (156)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	MAYOR_IGUAL  shift 132
+	MENOR_IGUAL  shift 133
+	DISTINTO  shift 134
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 425
+	'='  shift 135
+	'<'  shift 136
+	'>'  shift 137
+	.  error
+
+	comparador  goto 141
+
+
+state 386
+	ejecucion_retorno : error_retorno_expresion .  (37)
+
+	.  reduce 37
+
+
+state 387
+	cuerpo_funcion : sentencias retorno .  (30)
+
+	.  reduce 30
+
+
+state 388
+	error_funcion : ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' .  (129)
+
+	.  reduce 129
+
+
+state 389
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (85)
+
+	.  reduce 85
+
+
+state 390
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+
+	'{'  shift 426
+	.  error
+
+
+state 391
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' . ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (187)
+
+	ELSE  shift 427
+	END_IF  shift 428
+	.  error
+
+
+state 392
+	error_seleccion : IF condicion THEN '{' '}' . ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+	error_seleccion : IF condicion THEN '{' '}' . END_IF ';'  (190)
+
+	ELSE  shift 429
+	END_IF  shift 430
+	.  error
+
+
+state 393
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' '{' bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' ELSE '{' '}' END_IF ';'  (183)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' ELSE '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . END_IF ';'  (191)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' ';'  (192)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables . '}' END_IF  (193)
+
+	ELSE  shift 431
+	END_IF  shift 432
+	'}'  shift 433
+	.  error
+
+
+state 394
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' . ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' . END_IF ';'  (189)
+
+	ELSE  shift 434
+	END_IF  shift 435
+	.  error
+
+
+state 395
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' . ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (188)
+
+	ELSE  shift 436
+	END_IF  shift 437
+	.  error
+
+
+state 396
+	error_funcion : FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion '}' .  (134)
+
+	.  reduce 134
+
+
+state 397
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' '}' .  (136)
+
+	.  reduce 136
+
+
+state 398
+	funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion . '}'  (21)
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion . error  (137)
+
+	error  shift 438
+	'}'  shift 439
+	.  error
+
+
+state 399
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion '}' .  (135)
+
+	.  reduce 135
+
+
+state 400
+	error_funcion : FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion '}' .  (133)
+
+	.  reduce 133
+
+
+state 401
+	error_funcion : FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion '}' .  (132)
+
+	.  reduce 132
+
+
+state 402
+	error_funcion : FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' .  (131)
+
+	.  reduce 131
+
+
+state 403
+	error_funcion : FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' .  (130)
+
+	.  reduce 130
+
+
+state 404
+	error_cuerpo_dountil : '{' '}' UNTIL condicion ':' asignacion_do_until ';' .  (210)
+
+	.  reduce 210
+
+
+state 405
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables UNTIL condicion ':' asignacion_do_until ';' .  (211)
+
+	.  reduce 211
+
+
+state 406
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL ':' asignacion_do_until ';' .  (213)
+
+	.  reduce 213
+
+
+state 407
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion error asignacion_do_until . ';'  (214)
+
+	';'  shift 440
+	.  error
+
+
+state 408
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion $$7 ':' . asignacion_do_until ';'  (100)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 441
+	error_asignacion_do_until  goto 342
+
+
+state 409
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' condicion ':' asignacion_do_until ';' .  (212)
+
+	.  reduce 212
+
+
+state 410
+	error_cuerpo_dountil : bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';' .  (209)
+
+	.  reduce 209
+
+
+state 411
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until . ';'  (207)
+
+	';'  shift 442
+	.  error
+
+
+state 412
+	error_cuerpo_dountil_etiqueta : '{' '}' UNTIL condicion ':' . asignacion_do_until ';'  (216)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 443
+	error_asignacion_do_until  goto 342
+
+
+state 413
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' . asignacion_do_until ';'  (217)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 444
+	error_asignacion_do_until  goto 342
+
+
+state 414
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' . asignacion_do_until ';'  (219)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 445
+	error_asignacion_do_until  goto 342
+
+
+state 415
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion . $$8 ':' asignacion_do_until ';'  (104)
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion . error asignacion_do_until ';'  (220)
+	$$8 : .  (103)
+
+	error  shift 446
+	':'  reduce 103
+
+	$$8  goto 447
+
+
+state 416
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' . asignacion_do_until ';'  (218)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 448
+	error_asignacion_do_until  goto 342
+
+
+state 417
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' . asignacion_do_until ';'  (215)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 449
+	error_asignacion_do_until  goto 342
+
+
+state 418
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion_do_until : ID ASSIGN expresion . ')'  (221)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 450
+	.  error
+
+
+state 419
+	asignacion_do_until : '(' ID ASSIGN . expresion ')'  (106)
+	error_asignacion_do_until : '(' ID ASSIGN . ')'  (224)
+	error_asignacion_do_until : '(' ID ASSIGN . expresion error  (225)
+
+	error  shift 51
+	ID  shift 52
+	CTE_INT  shift 53
+	CTE_DBL  shift 54
+	TOF64  shift 56
+	'-'  shift 57
+	'*'  shift 58
+	'/'  shift 59
+	')'  shift 451
+	.  error
+
+	expresion  goto 452
+	termino  goto 62
+	error_expresion  goto 63
+	factor  goto 64
+	error_termino  goto 65
+	invocacion  goto 66
+	error_invocacion  goto 67
+
+
+state 420
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion_do_until : '(' ID expresion . ')'  (223)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 453
+	.  error
+
+
+state 421
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion_do_until : '(' ASSIGN expresion . ')'  (222)
+
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 454
+	.  error
+
+
+state 422
+	error_retorno_expresion : '(' ')' .  (149)
+
+	.  reduce 149
+
+
+state 423
+	ejecucion_retorno : '(' expresion . ')'  (36)
+	condicion : '(' expresion . comparador expresion ')'  (38)
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	error_retorno_expresion : '(' expresion .  (148)
+	error_condicion : '(' expresion . comparador ')'  (153)
+	error_condicion : '(' expresion . comparador expresion  (154)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+
+	MAYOR_IGUAL  shift 132
+	MENOR_IGUAL  shift 133
+	DISTINTO  shift 134
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 455
+	'='  shift 135
+	'<'  shift 136
+	'>'  shift 137
+	error  reduce 148
+	'}'  reduce 148
+	';'  reduce 148
+
+	comparador  goto 202
+
+
+state 424
+	retorno : RETURN ejecucion_retorno ';' .  (33)
+
+	.  reduce 33
+
+
+state 425
+	error_retorno_expresion : expresion ')' .  (147)
+
+	.  reduce 147
+
+
+state 426
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (87)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 456
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 427
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+
+	'{'  shift 457
+	.  error
+
+
+state 428
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (187)
+
+	';'  shift 458
+	.  error
+
+
+state 429
+	error_seleccion : IF condicion THEN '{' '}' ELSE . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+
+	'{'  shift 459
+	.  error
+
+
+state 430
+	error_seleccion : IF condicion THEN '{' '}' END_IF . ';'  (190)
+
+	';'  shift 460
+	.  error
+
+
+state 431
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables ELSE . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+
+	'{'  shift 461
+	.  error
+
+
+state 432
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables END_IF . ';'  (191)
+
+	';'  shift 462
+	.  error
+
+
+state 433
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . ELSE bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . ELSE '{' '}' END_IF ';'  (183)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . ELSE '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . ELSE '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . ELSE '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . ';'  (192)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' . END_IF  (193)
+
+	ELSE  shift 463
+	END_IF  shift 464
+	'{'  shift 465
+	';'  shift 466
+	.  error
+
+
+state 434
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' ELSE . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+
+	'{'  shift 467
+	.  error
+
+
+state 435
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' END_IF . ';'  (189)
+
+	';'  shift 468
+	.  error
+
+
+state 436
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' ELSE . '{' bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+
+	'{'  shift 469
+	.  error
+
+
+state 437
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (188)
+
+	';'  shift 470
+	.  error
+
+
+state 438
+	error_funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion error .  (137)
+
+	.  reduce 137
+
+
+state 439
+	funcion : FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' .  (21)
+
+	.  reduce 21
+
+
+state 440
+	error_cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion error asignacion_do_until ';' .  (214)
+
+	.  reduce 214
+
+
+state 441
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion $$7 ':' asignacion_do_until . ';'  (100)
+
+	';'  shift 471
+	.  error
+
+
+state 442
+	error_dountil : etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' .  (207)
+
+	.  reduce 207
+
+
+state 443
+	error_cuerpo_dountil_etiqueta : '{' '}' UNTIL condicion ':' asignacion_do_until . ';'  (216)
+
+	';'  shift 472
+	.  error
+
+
+state 444
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' asignacion_do_until . ';'  (217)
+
+	';'  shift 473
+	.  error
+
+
+state 445
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' asignacion_do_until . ';'  (219)
+
+	';'  shift 474
+	.  error
+
+
+state 446
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error . asignacion_do_until ';'  (220)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 475
+	error_asignacion_do_until  goto 342
+
+
+state 447
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion $$8 . ':' asignacion_do_until ';'  (104)
+
+	':'  shift 476
+	.  error
+
+
+state 448
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' asignacion_do_until . ';'  (218)
+
+	';'  shift 477
+	.  error
+
+
+state 449
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until . ';'  (215)
+
+	';'  shift 478
+	.  error
+
+
+state 450
+	error_asignacion_do_until : ID ASSIGN expresion ')' .  (221)
+
+	.  reduce 221
+
+
+state 451
+	error_asignacion_do_until : '(' ID ASSIGN ')' .  (224)
+
+	.  reduce 224
+
+
+state 452
+	expresion : expresion . '+' termino  (41)
+	expresion : expresion . '-' termino  (42)
+	asignacion_do_until : '(' ID ASSIGN expresion . ')'  (106)
+	error_expresion : expresion . '+' error  (157)
+	error_expresion : expresion . '-' error  (158)
+	error_asignacion_do_until : '(' ID ASSIGN expresion . error  (225)
+
+	error  shift 479
+	'+'  shift 126
+	'-'  shift 127
+	')'  shift 480
+	.  error
+
+
+state 453
+	error_asignacion_do_until : '(' ID expresion ')' .  (223)
+
+	.  reduce 223
+
+
+state 454
+	error_asignacion_do_until : '(' ASSIGN expresion ')' .  (222)
+
+	.  reduce 222
+
+
+state 455
+	ejecucion_retorno : '(' expresion ')' .  (36)
+
+	.  reduce 36
+
+
+state 456
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (87)
+
+	'}'  shift 481
+	.  error
+
+
+state 457
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (176)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 482
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 458
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (187)
+
+	.  reduce 187
+
+
+state 459
+	error_seleccion : IF condicion THEN '{' '}' ELSE '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (179)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 483
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 460
+	error_seleccion : IF condicion THEN '{' '}' END_IF ';' .  (190)
+
+	.  reduce 190
+
+
+state 461
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (180)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 484
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 462
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables END_IF ';' .  (191)
+
+	.  reduce 191
+
+
+state 463
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE . bloque_de_sent_ejecutables '}' END_IF ';'  (182)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE . '{' '}' END_IF ';'  (183)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE . '{' bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE . '{' bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE . '{' bloque_de_sent_ejecutables '}' END_IF  (186)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'{'  shift 485
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 486
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 464
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' END_IF .  (193)
+
+	.  reduce 193
+
+
+state 465
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (181)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 487
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 466
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ';' .  (192)
+
+	.  reduce 192
+
+
+state 467
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (178)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 488
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 468
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' END_IF ';' .  (189)
+
+	.  reduce 189
+
+
+state 469
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' . bloque_de_sent_ejecutables '}' END_IF ';'  (177)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 489
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 470
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (188)
+
+	.  reduce 188
+
+
+state 471
+	cuerpo_dountil : '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion $$7 ':' asignacion_do_until ';' .  (100)
+
+	.  reduce 100
+
+
+state 472
+	error_cuerpo_dountil_etiqueta : '{' '}' UNTIL condicion ':' asignacion_do_until ';' .  (216)
+
+	.  reduce 216
+
+
+state 473
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' asignacion_do_until ';' .  (217)
+
+	.  reduce 217
+
+
+state 474
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' asignacion_do_until ';' .  (219)
+
+	.  reduce 219
+
+
+state 475
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error asignacion_do_until . ';'  (220)
+
+	';'  shift 490
+	.  error
+
+
+state 476
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion $$8 ':' . asignacion_do_until ';'  (104)
+
+	ID  shift 339
+	'('  shift 340
+	.  error
+
+	asignacion_do_until  goto 491
+	error_asignacion_do_until  goto 342
+
+
+state 477
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' asignacion_do_until ';' .  (218)
+
+	.  reduce 218
+
+
+state 478
+	error_cuerpo_dountil_etiqueta : bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until ';' .  (215)
+
+	.  reduce 215
+
+
+state 479
+	error_asignacion_do_until : '(' ID ASSIGN expresion error .  (225)
+
+	.  reduce 225
+
+
+state 480
+	asignacion_do_until : '(' ID ASSIGN expresion ')' .  (106)
+
+	.  reduce 106
+
+
+state 481
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (87)
+
+	END_IF  shift 492
+	.  error
+
+
+state 482
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (176)
+
+	'}'  shift 493
+	.  error
+
+
+state 483
+	error_seleccion : IF condicion THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (179)
+
+	'}'  shift 494
+	.  error
+
+
+state 484
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (180)
+
+	'}'  shift 495
+	.  error
+
+
+state 485
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' . '}' END_IF ';'  (183)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' . bloque_de_sent_ejecutables END_IF ';'  (184)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' . bloque_de_sent_ejecutables '}' ';'  (185)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' . bloque_de_sent_ejecutables '}' END_IF  (186)
+
+	error  shift 81
+	ID  shift 82
+	IF  shift 11
+	OUT  shift 12
+	ASSIGN  shift 15
+	DISCARD  shift 17
+	DO  shift 18
+	DEFER  shift 19
+	'}'  shift 496
+	'('  shift 20
+	':'  shift 21
+	.  error
+
+	ejecutables  goto 282
+	ejecutable  goto 26
+	ejecutable_comun  goto 33
+	ejecutable_defer  goto 34
+	asignacion  goto 35
+	seleccion  goto 36
+	mensaje_pantalla  goto 37
+	invocacion_discard  goto 38
+	expresion_dountil  goto 39
+	error_asignacion  goto 40
+	bloque_de_sent_ejecutables  goto 497
+	error_mensaje_pantalla  goto 41
+	error_invocacion_discard  goto 42
+	etiqueta  goto 43
+	error_dountil  goto 44
+
+
+state 486
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables . '}' END_IF ';'  (182)
+
+	'}'  shift 498
+	.  error
+
+
+state 487
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (181)
+
+	'}'  shift 499
+	.  error
+
+
+state 488
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (178)
+
+	'}'  shift 500
+	.  error
+
+
+state 489
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables . '}' END_IF ';'  (177)
+
+	'}'  shift 501
+	.  error
+
+
+state 490
+	error_cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion error asignacion_do_until ';' .  (220)
+
+	.  reduce 220
+
+
+state 491
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion $$8 ':' asignacion_do_until . ';'  (104)
+
+	';'  shift 502
+	.  error
+
+
+state 492
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (87)
+
+	';'  shift 503
+	.  error
+
+
+state 493
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (176)
+
+	END_IF  shift 504
+	.  error
+
+
+state 494
+	error_seleccion : IF condicion THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (179)
+
+	END_IF  shift 505
+	.  error
+
+
+state 495
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (180)
+
+	END_IF  shift 506
+	.  error
+
+
+state 496
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' . END_IF ';'  (183)
+
+	END_IF  shift 507
+	.  error
+
+
+state 497
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables . END_IF ';'  (184)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables . '}' ';'  (185)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables . '}' END_IF  (186)
+
+	END_IF  shift 508
+	'}'  shift 509
+	.  error
+
+
+state 498
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' . END_IF ';'  (182)
+
+	END_IF  shift 510
+	.  error
+
+
+state 499
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (181)
+
+	END_IF  shift 511
+	.  error
+
+
+state 500
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (178)
+
+	END_IF  shift 512
+	.  error
+
+
+state 501
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' . END_IF ';'  (177)
+
+	END_IF  shift 513
+	.  error
+
+
+state 502
+	cuerpo_dountil_etiqueta : '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion $$8 ':' asignacion_do_until ';' .  (104)
+
+	.  reduce 104
+
+
+state 503
+	cuerpo_seleccion : THEN '{' bloque_de_sent_ejecutables '}' $$4 ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (87)
+
+	.  reduce 87
+
+
+state 504
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (176)
+
+	';'  shift 514
+	.  error
+
+
+state 505
+	error_seleccion : IF condicion THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (179)
+
+	';'  shift 515
+	.  error
+
+
+state 506
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (180)
+
+	';'  shift 516
+	.  error
+
+
+state 507
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF . ';'  (183)
+
+	';'  shift 517
+	.  error
+
+
+state 508
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF . ';'  (184)
+
+	';'  shift 518
+	.  error
+
+
+state 509
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' . ';'  (185)
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' . END_IF  (186)
+
+	END_IF  shift 519
+	';'  shift 520
+	.  error
+
+
+state 510
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF . ';'  (182)
+
+	';'  shift 521
+	.  error
+
+
+state 511
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (181)
+
+	';'  shift 522
+	.  error
+
+
+state 512
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (178)
+
+	';'  shift 523
+	.  error
+
+
+state 513
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF . ';'  (177)
+
+	';'  shift 524
+	.  error
+
+
+state 514
+	error_seleccion : IF THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (176)
+
+	.  reduce 176
+
+
+state 515
+	error_seleccion : IF condicion THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (179)
+
+	.  reduce 179
+
+
+state 516
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (180)
+
+	.  reduce 180
+
+
+state 517
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';' .  (183)
+
+	.  reduce 183
+
+
+state 518
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';' .  (184)
+
+	.  reduce 184
+
+
+state 519
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF .  (186)
+
+	.  reduce 186
+
+
+state 520
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';' .  (185)
+
+	.  reduce 185
+
+
+state 521
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';' .  (182)
+
+	.  reduce 182
+
+
+state 522
+	error_seleccion : IF condicion THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (181)
+
+	.  reduce 181
+
+
+state 523
+	error_seleccion : IF condicion THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (178)
+
+	.  reduce 178
+
+
+state 524
+	error_seleccion : IF condicion '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' .  (177)
+
+	.  reduce 177
+
+
+39 terminals, 74 nonterminals
+238 grammar rules, 525 states
