@@ -1,4 +1,4 @@
-
+%{
 package Parser;
 import AnalizadorLexico.*;
 %}
