@@ -12,8 +12,6 @@ public class AS2 extends AccionSemantica{
         int id_palabra_reservada = TablaPalabrasReservadas.obtenerId(simbolo);
         if (id_palabra_reservada != -1) { //Es una palabra reservada
             identificador = id_palabra_reservada;
-            if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO)
-                TablaSimbolos.agregarSimbolo(simbolo);
             Main.tokensLexico.add(identificador);
             return new Token(identificador);
         } 
