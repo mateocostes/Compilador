@@ -39,8 +39,9 @@ ejecutables         :   ejecutables ejecutable
                     |   ejecutable
                     ;
 
-declarativa        	:	funcion ';'
-					|   tipo lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
+declarativa        	:	funcion ';' { this.declarando = false;}
+					|   tipo { this.declarando = true;} lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
+													this.declarando = true;
 													String tipoVar = $1.sval;
 													lista_de_variables = (ArrayList<String>)$2.obj;
 													for(String lexema : lista_de_variables) {   // por cada variable declarada
@@ -51,7 +52,8 @@ declarativa        	:	funcion ';'
 															this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, lexema + "." + ambito);	// se actualiza el nombre de la variable en la tabla de simbolos
 														}
 													}
-													lista_de_variables.clear();}
+													lista_de_variables.clear();
+													this.declarando = false;}
 													
                     |   error_declarativa
                     ;
@@ -73,6 +75,7 @@ lista_de_variables  :   ID {Main.estructurasSintacticas.add("[Parser: linea " + 
 funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{'  	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion"); 
 																		String tipoFunc = $4.sval;
 																		String nombreFunc = $2.sval;
+																		this.declarando = true;
 																		int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc); //se obtiene la clave
 																		if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
 																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
@@ -491,6 +494,7 @@ error_bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables ':' etiqueta ';' {
 private AnalizadorLexico analizadorLexico;
 private ArrayList<String> lista_de_variables;
 public static String ambito;
+public static boolean declarando = true;
 
 public Parser(AnalizadorLexico analizadorLexico)
 {

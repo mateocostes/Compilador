@@ -1,7 +1,6 @@
 %{
 package Parser;
 import AnalizadorLexico.*;
-import java.util.ArrayList;
 %}
 
 //declaracion de tokens a recibir del Analizador Lexico
@@ -12,12 +11,7 @@ import java.util.ArrayList;
 %start programa
 %%
 
-programa            :   ID {String nombre_programa = $1.sval;
-							int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombre_programa); //se obtiene la clave
-							if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO) // si esta declarada
-								this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de programa"); // se agrega el uso a la tabla de simbolos
-								this.ambito = nombre_programa;}
-						conjunto_sentencias
+programa            :   ID conjunto_sentencias
                     |   error_programa
                     ;
 					
@@ -39,53 +33,23 @@ ejecutables         :   ejecutables ejecutable
                     |   ejecutable
                     ;
 
-declarativa        	:	funcion ';' { this.declarando = false;}
-					|   tipo { this.declarando = true;} lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
-													this.declarando = true;
-													String tipoVar = $1.sval;
-													lista_de_variables = (ArrayList<String>)$2.obj;
-													for(String lexema : lista_de_variables) {   // por cada variable declarada
-														int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema); //se obtiene la clave
-														if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
-															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoVar); // se agrega el tipo a la tabla de simbolos
-															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "variable"); // se agrega el uso a la tabla de simbolos
-															this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, lexema + "." + ambito);	// se actualiza el nombre de la variable en la tabla de simbolos
-														}
-													}
-													lista_de_variables.clear();
-													this.declarando = false;}
-													
+declarativa        	:	funcion ';'
+					|   tipo lista_de_variables ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");}
                     |   error_declarativa
                     ;
 
-tipo                :   UI16 {$$ = new ParserVal("ui16"); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'UI16'");}
-                    |   F64   {$$ = new ParserVal("f64"); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'F64'");}  
+tipo                :   UI16 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'UI16'");}
+                    |   F64   {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'F64'");}  
                     ;
 					
-lista_de_variables  :   ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador -> " + $1.sval);
-							lista_de_variables.add($1.sval);
-                            $$ = new ParserVal(lista_de_variables);} // retorna la lista de variables
-      		        |   lista_de_variables ',' ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador (dentro de una lista de variables) -> " +  $3.sval);
-					                            lista_de_variables = (ArrayList<String>)$1.obj;
-												lista_de_variables.add($3.sval);
-												$$ = new ParserVal(lista_de_variables);} // retorna la lista de variables
+lista_de_variables  :   ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador -> " + $1.sval);}
+      		        |   lista_de_variables ',' ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador (dentro de una lista de variables) -> " +  $3.sval);}
                     |   error_lista_de_variables
                     ;
 				
-funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{'  	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion"); 
-																		String tipoFunc = $4.sval;
-																		String nombreFunc = $2.sval;
-																		this.declarando = true;
-																		int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc); //se obtiene la clave
-																		if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
-																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de funcion");	
-																			this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreFunc + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos
-																		this.ambito = ambito + "." + nombreFunc;
-																		};}
-						cuerpo_funcion
+funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion");}  
                     |   error_funcion
-                    ; 					
+                    ;  
 					
 lista_parametros	: 	parametros ',' parametro //PARAMETROS SE UTILIZA PARA ESTABLECER EL MAXIMO DE PARAMETROS PERMITIDOS EN 2;
 					|	parametro
@@ -96,22 +60,13 @@ lista_parametros	: 	parametros ',' parametro //PARAMETROS SE UTILIZA PARA ESTABL
 parametros			: 	parametro
 					;
 					
-parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $2.sval);
-								String tipoParam = $1.sval;
-								String nombreParam = $2.sval;
-								int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreParam); //se obtiene la clave
-								if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoParam);
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de parametro");
-									this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreParam + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos									
-								};}
+parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $2.sval);}
 					|	error_parametro
 					;
 			
-cuerpo_funcion      :   sentencias retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf("."));} //se vuelve al ambito anterior
-                    |   retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf(".")); 
-								Main.estructurasSintacticas.add("[ Parser, " + this.analizadorLexico.linea + "] Warning: funcion vacia");}
-                    |   error_cuerpo_funcion
+cuerpo_funcion      :   sentencias retorno
+                    |   retorno {Main.estructurasSintacticas.add("[ Parser, " + this.analizadorLexico.linea + "] Warning: funcion vacia");}
+                    |   error_bloque_funcion
                     ;    
 
 retorno             :   RETURN ejecucion_retorno ';' {Main.estructurasSintacticas.add("Parser: linea " + this.analizadorLexico.linea + ". Se detecto un retorno de funcion");}
@@ -159,8 +114,7 @@ factor       		:   CTE_INT  {Main.estructurasSintacticas.add("[Parser: linea " +
 					| 	invocacion
 					;
 					
-invocacion			: 	ID '(' lista_parametros_reales ')'	{Main.polaca.addElementPolaca($1.sval);
-															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una invocacion a funcion");}
+invocacion			: 	ID '(' lista_parametros_reales ')'	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una invocacion a funcion");}
 					|	error_invocacion
 					;
 
@@ -220,21 +174,18 @@ cuerpo_seleccion	: 	THEN '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.pol
 																Main.polaca.apilar(Main.polaca.getSize());
 																Main.polaca.addElementPolaca("");
 																Main.polaca.addElementPolaca("BI");}
-						cuerpo_else
+						ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());
+																			Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un IF-ELSE");}
 					|	error_cuerpo_seleccion
 					;
-
-cuerpo_else	:	ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());
-																	Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un IF-ELSE");}
-			|	error_cuerpo_else
-			;
+					
 						
 bloque_de_sent_ejecutables	:  	ejecutables
 							;
 							
 			
-mensaje_pantalla	:	OUT '(' CADENA ')'	';' {Main.polaca.addElementPolaca($3.sval);
-												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un mensaje por pantalla");}
+mensaje_pantalla	:	OUT '(' CADENA ')'	';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un mensaje por pantalla");}
+					|	OUT '(' ')'	';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un mensaje por pantalla vacio");}
 					|	error_mensaje_pantalla
 					;
 					
@@ -255,6 +206,7 @@ cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Mai
 																				Main.polaca.addElementPolaca("BI");}
 						':' asignacion_do_until ';'  {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 													if (Main.polaca.existeBreak()){ //Hay un Break
+														System.out.println("ENTRO");
 														Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 													Main.polaca.addElementPolaca(Main.polaca.desapilar());
 													Main.polaca.addElementPolaca("BF");
@@ -275,7 +227,8 @@ cuerpo_dountil_etiqueta		:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNT
 							;
 
 
-asignacion_do_until :	'(' asignacion ')' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una asignacion do until");}
+//SE PODRIA USAR ASIGNACION				
+asignacion_do_until :	'(' ID ASSIGN expresion ')' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una asignacion do until");}
 					|	error_asignacion_do_until
 					;
 					
@@ -330,13 +283,15 @@ error_lista_de_variables	:	error ',' ID {Main.erroresSintacticos.add("[ Parser, 
 							;
 							
 				
-error_funcion       :   ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la palabra reservada fun al principio de la declaracion de la funcion");}
-                    |   FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el nombre de la funcion");}
-                    |   FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de apertura para los parametros");}                  
-					|	FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de cierre para los parametros");}
-					|	FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el ':' luego de los parametros");}
-					|	FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el tipo de retorno de la funcion");}
-					|	FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de apertura del cuerpo de la funcion");}
+error_funcion       :   ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la palabra reservada fun al principio de la declaracion de la funcion");}
+                    |   FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el nombre de la funcion");}
+                    |   FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de apertura para los parametros");}                  
+					|	FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de cierre para los parametros");}
+					|	FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el ':' luego de los parametros");}
+					|	FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el tipo de retorno de la funcion");}
+					|	FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de apertura del cuerpo de la funcion");}
+					|	FUN ID '(' lista_parametros ')' ':' tipo '{' '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el cuerpo de la funcion");}
+					|	FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de cierre del cuerpo de la funcion");}
                     ;
 			
 error_lista_parametros	:	parametros ',' parametro ',' error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros: No se puede tener mas de dos parametros");}
@@ -349,9 +304,8 @@ error_parametro	:	error ID {Main.erroresSintacticos.add("[ Parser, " + this.anal
 				|	tipo error{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion del parametro: Falta el identificador del parametro");}
 				;
 
-error_cuerpo_funcion 	: 	retorno error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta la llave de cierre");}
-						|	'}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta el retorno");}
-						;
+error_bloque_funcion : error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta el retorno");}
+					 ;
 
 
 error_retorno       :   RETURN ejecucion_retorno {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el retorno de la funcion: falta el ';'");}
@@ -407,10 +361,16 @@ error_seleccion	:	IF cuerpo_seleccion {Main.erroresSintacticos.add("[ Parser, " 
 				|	IF condicion error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el cuerpo de la seleccion");}
 				;
 					
-error_cuerpo_seleccion	:	'{' bloque_de_sent_ejecutables '}' cuerpo_else {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el then en la sentencia de seleccion");} //ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el then en la sentencia de seleccion");}
-						|	THEN bloque_de_sent_ejecutables '}' cuerpo_else {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias de la seleccion");} //ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias de la seleccion");}
-						|	THEN '{' '}' cuerpo_else {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias en la sentencia de seleccion");} //ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias en la sentencia de seleccion");}
-						|	THEN '{' bloque_de_sent_ejecutables cuerpo_else {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");} //ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");}
+error_cuerpo_seleccion	:	'{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el then en la sentencia de seleccion");}
+						|	THEN bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias de la seleccion");}
+						|	THEN '{' '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias en la sentencia de seleccion");}
+						|	THEN '{' bloque_de_sent_ejecutables ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");}
+						|	THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el else luego del primer bloque de sentencias de la seleccion");}
+						//|	THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias luego del else");}
+						//|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias luego del else");}
+						//|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias luego del else");}
+						//|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el end_if de la seleccion");}
+						//|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de seleccion");}
 						|	'{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el then en la sentencia de seleccion");}
 						|	THEN bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias de la seleccion");}
 						|	THEN '{' '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias en la sentencia de seleccion");}
@@ -419,19 +379,14 @@ error_cuerpo_seleccion	:	'{' bloque_de_sent_ejecutables '}' cuerpo_else {Main.er
 						|	THEN '{' bloque_de_sent_ejecutables '}' END_IF {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de seleccion");}
 						;
 
-error_cuerpo_else	:	THEN '{' bloque_de_sent_ejecutables '}' '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el else luego del primer bloque de sentencias de la seleccion");}
-					|	THEN '{' bloque_de_sent_ejecutables '}' ELSE bloque_de_sent_ejecutables '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias luego del else");}
-					|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' '}' END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias luego del else");}
-					|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables END_IF ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias luego del else");}
-					|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el end_if de la seleccion");}
-					|	THEN '{' bloque_de_sent_ejecutables '}' ELSE '{' bloque_de_sent_ejecutables '}' END_IF {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de seleccion");}
-					;
-					
 error_mensaje_pantalla	:	'(' CADENA ')' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el out en la sentencia de mensaje por pantalla");}
 						|	OUT CADENA ')' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la sentencia de mensaje por pantalla");}
 						|	OUT '(' CADENA ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en la sentencia de mensaje por pantalla");}
 						|	OUT '(' CADENA ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de mensaje por pantalla");}
-						|	OUT	'(' ')' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la cadena en el mensaje por pantalla");}
+						|	'(' ')' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el out en la sentencia de mensaje por pantalla");}
+						|	OUT ')' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la sentencia de mensaje por pantalla");}
+						|	OUT '(' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en la sentencia de mensaje por pantalla");}
+						|	OUT '(' ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de mensaje por pantalla");}
 						;
 
 error_invocacion_discard	:	DISCARD '(' lista_parametros_reales ')' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el nombre de la funcion discard");}
@@ -468,9 +423,13 @@ error_cuerpo_dountil_etiqueta	:	bloque_de_sentencias_ejecutables_etiqueta '}' UN
 								//|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' ';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la asignacion luego del ':' en la sentencia do_until con etiqueta");}
 								//|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' asignacion_do_until {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' para cerrar la sentencia do_until con etiqueta");}
 				
-error_asignacion_do_until	:	asignacion ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la asignacion del do_until");}
-							|	'(' ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Error en la asignacion del do_until");}
-							|	'(' asignacion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en la asignacion del do_until");}
+
+
+error_asignacion_do_until	:	ID ASSIGN expresion ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la asignacion del do_until");}
+							|	'(' ASSIGN expresion ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el identificador a la izquierda de la asignacion del do_until");}
+							|	'(' ID expresion ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el '=:' en la asignacion del do_until");}
+							|	'(' ID ASSIGN ')' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la expresion en la asignacion del do_until");}
+							|	'(' ID ASSIGN expresion error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en la asignacion del do_until");}
 							;
 
 error_bloque_sent_ejecutables	:	';' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta al menos una sentencia ejecutable dentro del bloque de sentencias");}
@@ -492,14 +451,9 @@ error_bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables ':' etiqueta ';' {
 
 %% 
 private AnalizadorLexico analizadorLexico;
-private ArrayList<String> lista_de_variables;
-public static String ambito;
-public static boolean declarando = true;
-
 public Parser(AnalizadorLexico analizadorLexico)
 {
-	this.analizadorLexico = analizadorLexico;
-	this.lista_de_variables = new ArrayList<String>();
+  this.analizadorLexico = analizadorLexico;
 }
 
 public int yylex(){

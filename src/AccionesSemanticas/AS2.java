@@ -1,5 +1,6 @@
 package AccionesSemanticas;
 import AnalizadorLexico.*;
+import Parser.Parser;
 
 public class AS2 extends AccionSemantica{
 
@@ -23,7 +24,8 @@ public class AS2 extends AccionSemantica{
             }
             identificador = AnalizadorLexico.IDENTIFICADOR;
         }
-        if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO)
+        System.out.println("SIMBOLO " + simbolo + " DECLARANDO: " + Parser.declarando);
+        if ((TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO)) //&& (!Parser.declarando))
             TablaSimbolos.agregarSimbolo(simbolo);
         Main.tokensLexico.add(identificador);
         return new Token(identificador,simbolo);

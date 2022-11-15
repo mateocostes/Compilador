@@ -55,6 +55,10 @@ public class TablaSimbolos {
         }
         return NO_ENCONTRADO_S;
     }
+
+    public static boolean perteneceAmbito(String lexema, String ambito_actual){
+        return false;
+    }
     
     public static void imprimirTabla() {
         System.out.println("\nTablaSimbolos:");
