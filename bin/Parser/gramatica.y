@@ -1,6 +1,7 @@
 %{
 package Parser;
 import AnalizadorLexico.*;
+import java.util.ArrayList;
 %}
 
 //declaracion de tokens a recibir del Analizador Lexico
@@ -34,7 +35,16 @@ ejecutables         :   ejecutables ejecutable
                     ;
 
 declarativa        	:	funcion ';'
-					|   tipo lista_de_variables ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");}
+					|   tipo lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
+													String tipoVar = $1.sval;
+													lista_de_variables = (ArrayList<String>)$2.obj;
+													for(String lexema : lista_de_variables) {   // por cada variable declarada
+														int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema); //se obtiene la clave
+														if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO) // si esta declarada
+															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoVar); // se agrega el tipo a la tabla de simbolos
+															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "variable");} // se agrega el uso a la tabla de simbolos
+													lista_de_variables.clear();}
+													
                     |   error_declarativa
                     ;
 
@@ -42,12 +52,24 @@ tipo                :   UI16 {$$ = new ParserVal("ui16"); Main.estructurasSintac
                     |   F64   {$$ = new ParserVal("f64"); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'F64'");}  
                     ;
 					
-lista_de_variables  :   ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador -> " + $1.sval);}
-      		        |   lista_de_variables ',' ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador (dentro de una lista de variables) -> " +  $3.sval);}
+lista_de_variables  :   ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador -> " + $1.sval);
+							lista_de_variables.add($1.sval);
+                            $$ = new ParserVal(lista_de_variables);} // retorna la lista de variables
+      		        |   lista_de_variables ',' ID {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador (dentro de una lista de variables) -> " +  $3.sval);
+					                            lista_de_variables = (ArrayList<String>)$1.obj;
+												lista_de_variables.add($3.sval);
+												$$ = new ParserVal(lista_de_variables);} // retorna la lista de variables
                     |   error_lista_de_variables
                     ;
 				
-funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion");}  
+funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion"); 
+																						String tipoFunc = $4.sval;
+																						String nombreFunc = $2.sval;
+																						int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc); //se obtiene la clave
+																						if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+																							this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
+																							this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de funcion");	
+																						};}
                     |   error_funcion
                     ;  
 					
@@ -60,7 +82,14 @@ lista_parametros	: 	parametros ',' parametro //PARAMETROS SE UTILIZA PARA ESTABL
 parametros			: 	parametro
 					;
 					
-parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $2.sval);}
+parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $2.sval);
+								String tipoParam = $1.sval;
+								String nombreParam = $2.sval;
+								int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreParam); //se obtiene la clave
+								if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoParam);
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de parametro");		
+								};}
 					|	error_parametro
 					;
 			
@@ -448,9 +477,12 @@ error_bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables ':' etiqueta ';' {
 
 %% 
 private AnalizadorLexico analizadorLexico;
+private ArrayList<String> lista_de_variables;
+
 public Parser(AnalizadorLexico analizadorLexico)
 {
-  this.analizadorLexico = analizadorLexico;
+	this.analizadorLexico = analizadorLexico;
+	this.lista_de_variables = new ArrayList<String>();
 }
 
 public int yylex(){

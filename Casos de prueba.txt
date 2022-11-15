@@ -58,3 +58,15 @@ prueba_nombre_programa {
 prueba_nombre_programa {
 	out ('hola');
 }
+
+prueba_nombre_programa {
+	f64 a, b, c, d;
+	ui16 var1, var2;
+}
+
+prueba_nombre_programa {
+	fun funcion1(ui16 var2) : ui16 {
+		var1 =: 4;
+		return (2.0);
+	};
+}

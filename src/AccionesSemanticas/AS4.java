@@ -11,7 +11,7 @@ public class AS4 extends AccionSemantica{
         String exp = simbolo.replace("D", "e"); //PARA LEER EXPONENCIAL
         double valor = Double.parseDouble(exp);
         if (!dentroRango(valor)) {
-        	Main.erroresLexico.add("Error Lexico linea: " + AnalizadorLexico.linea + ". Error en el rango del número double.");
+        	Main.erroresLexico.add("Error Lexico linea: " + AnalizadorLexico.linea + ". Error en el rango del nï¿½mero double.");
             if (valor < AnalizadorLexico.MINDOUBLEPOS) {
                 simbolo = Double.toString(AnalizadorLexico.MINDOUBLEPOS);
             } else {
@@ -21,7 +21,8 @@ public class AS4 extends AccionSemantica{
         if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO) {
             TablaSimbolos.agregarSimbolo(simbolo);
             int clave = TablaSimbolos.obtenerClave(simbolo);
-            TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf(AnalizadorLexico.CTE_DBL));
+            //TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf(AnalizadorLexico.CTE_DBL));
+            TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf("f64"));
         }
         Main.tokensLexico.add(AnalizadorLexico.CTE_DBL);
         return new Token(AnalizadorLexico.CTE_DBL, simbolo);
