@@ -70,3 +70,18 @@ prueba_nombre_programa {
 		return (2.0);
 	};
 }
+
+prueba_nombre_programa {
+	f64 a, b, c, d;
+	ui16 var1, var2;
+	f64 var2;
+	fun funcion1(ui16 var3) : ui16 {
+		var1 =: 4;
+		fun funcion2(f64 var4) : ui16 {
+			ui16 var5;
+			return (4);
+		};
+		ui16 var5;
+		return (2.0);
+	};
+}

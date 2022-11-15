@@ -12,7 +12,12 @@ import java.util.ArrayList;
 %start programa
 %%
 
-programa            :   ID conjunto_sentencias
+programa            :   ID {String nombre_programa = $1.sval;
+							int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombre_programa); //se obtiene la clave
+							if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO) // si esta declarada
+								this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de programa"); // se agrega el uso a la tabla de simbolos
+								this.ambito = nombre_programa;}
+						conjunto_sentencias
                     |   error_programa
                     ;
 					
@@ -40,9 +45,12 @@ declarativa        	:	funcion ';'
 													lista_de_variables = (ArrayList<String>)$2.obj;
 													for(String lexema : lista_de_variables) {   // por cada variable declarada
 														int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema); //se obtiene la clave
-														if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO) // si esta declarada
+														if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
 															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoVar); // se agrega el tipo a la tabla de simbolos
-															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "variable");} // se agrega el uso a la tabla de simbolos
+															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "variable"); // se agrega el uso a la tabla de simbolos
+															this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, lexema + "." + ambito);	// se actualiza el nombre de la variable en la tabla de simbolos
+														}
+													}
 													lista_de_variables.clear();}
 													
                     |   error_declarativa
@@ -62,16 +70,19 @@ lista_de_variables  :   ID {Main.estructurasSintacticas.add("[Parser: linea " + 
                     |   error_lista_de_variables
                     ;
 				
-funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion"); 
-																						String tipoFunc = $4.sval;
-																						String nombreFunc = $2.sval;
-																						int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc); //se obtiene la clave
-																						if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-																							this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
-																							this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de funcion");	
-																						};}
+funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{'  	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion"); 
+																		String tipoFunc = $4.sval;
+																		String nombreFunc = $2.sval;
+																		int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc); //se obtiene la clave
+																		if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
+																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de funcion");	
+																			this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreFunc + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos
+																		this.ambito = ambito + "." + nombreFunc;
+																		};}
+						cuerpo_funcion
                     |   error_funcion
-                    ;  
+                    ; 					
 					
 lista_parametros	: 	parametros ',' parametro //PARAMETROS SE UTILIZA PARA ESTABLECER EL MAXIMO DE PARAMETROS PERMITIDOS EN 2;
 					|	parametro
@@ -88,14 +99,16 @@ parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this
 								int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreParam); //se obtiene la clave
 								if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
 									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoParam);
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de parametro");		
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de parametro");
+									this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreParam + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos									
 								};}
 					|	error_parametro
 					;
 			
-cuerpo_funcion      :   sentencias retorno
-                    |   retorno {Main.estructurasSintacticas.add("[ Parser, " + this.analizadorLexico.linea + "] Warning: funcion vacia");}
-                    |   error_bloque_funcion
+cuerpo_funcion      :   sentencias retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf("."));} //se vuelve al ambito anterior
+                    |   retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf(".")); 
+								Main.estructurasSintacticas.add("[ Parser, " + this.analizadorLexico.linea + "] Warning: funcion vacia");}
+                    |   error_cuerpo_funcion
                     ;    
 
 retorno             :   RETURN ejecucion_retorno ';' {Main.estructurasSintacticas.add("Parser: linea " + this.analizadorLexico.linea + ". Se detecto un retorno de funcion");}
@@ -314,15 +327,13 @@ error_lista_de_variables	:	error ',' ID {Main.erroresSintacticos.add("[ Parser, 
 							;
 							
 				
-error_funcion       :   ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la palabra reservada fun al principio de la declaracion de la funcion");}
-                    |   FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el nombre de la funcion");}
-                    |   FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de apertura para los parametros");}                  
-					|	FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de cierre para los parametros");}
-					|	FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el ':' luego de los parametros");}
-					|	FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el tipo de retorno de la funcion");}
-					|	FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de apertura del cuerpo de la funcion");}
-					|	FUN ID '(' lista_parametros ')' ':' tipo '{' '}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el cuerpo de la funcion");}
-					|	FUN ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de cierre del cuerpo de la funcion");}
+error_funcion       :   ID '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la palabra reservada fun al principio de la declaracion de la funcion");}
+                    |   FUN '(' lista_parametros ')' ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el nombre de la funcion");}
+                    |   FUN ID lista_parametros ')' ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de apertura para los parametros");}                  
+					|	FUN ID '(' lista_parametros ':' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de cierre para los parametros");}
+					|	FUN ID '(' lista_parametros ')' tipo '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el ':' luego de los parametros");}
+					|	FUN ID '(' lista_parametros ')' ':' '{' cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el tipo de retorno de la funcion");}
+					|	FUN ID '(' lista_parametros ')' ':' tipo cuerpo_funcion {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de apertura del cuerpo de la funcion");}
                     ;
 			
 error_lista_parametros	:	parametros ',' parametro ',' error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros: No se puede tener mas de dos parametros");}
@@ -335,8 +346,9 @@ error_parametro	:	error ID {Main.erroresSintacticos.add("[ Parser, " + this.anal
 				|	tipo error{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion del parametro: Falta el identificador del parametro");}
 				;
 
-error_bloque_funcion : error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta el retorno");}
-					 ;
+error_cuerpo_funcion 	: 	retorno error {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta la llave de cierre");}
+						|	'}' {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta el retorno");}
+						;
 
 
 error_retorno       :   RETURN ejecucion_retorno {Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el retorno de la funcion: falta el ';'");}
@@ -478,6 +490,7 @@ error_bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables ':' etiqueta ';' {
 %% 
 private AnalizadorLexico analizadorLexico;
 private ArrayList<String> lista_de_variables;
+public static String ambito;
 
 public Parser(AnalizadorLexico analizadorLexico)
 {
