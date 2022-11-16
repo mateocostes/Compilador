@@ -235,8 +235,12 @@ ejecutable_defer	: 	DEFER ejecutable_comun {Main.estructurasSintacticas.add("[Pa
 					;	
 				
 asignacion			:	ID ASSIGN expresion ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una asignacion");
-												Main.polaca.addElementPolaca($1.sval);
-												Main.polaca.addElementPolaca("=:");} 
+												String id = $1.sval;
+												//Main.polaca.addElementPolaca($1.sval);
+												Main.polaca.addElementPolaca(id);
+												Main.polaca.addElementPolaca("=:");
+												if (!this.analizadorLexico.tablaSimbolos.verificarAmbito(id + "." + this.ambito))
+													Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");} 
 					|	error_asignacion
 					;
 					
