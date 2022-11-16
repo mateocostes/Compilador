@@ -19,15 +19,23 @@ public class TablaSimbolos {
         ++identificador_siguiente;
     }
 
-    public static int obtenerClave(String lexema) {
+    public static int obtenerClaveSinAmbito(String lexema) {
         for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
             String lexema_actual = entrada.getValue().get(LEXEMA);
-            //System.out.println("LEXEMA ACTUAL: " + lexema_actual);
             int posicion =  lexema_actual.indexOf("."); // obtengo la clave solo con el nombre de la variable, sin el ambito
             if (posicion != -1) {
                 lexema_actual = lexema_actual.substring(0, posicion);
-                //System.out.println("LEXEMA FINAL: " + lexema_actual);
             }
+            if (lexema_actual.equals(lexema)) {
+                return entrada.getKey();
+            }
+        }
+        return NO_ENCONTRADO; //No encontrado
+    }
+
+    public static int obtenerClave(String lexema) {
+        for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
+            String lexema_actual = entrada.getValue().get(LEXEMA);
             if (lexema_actual.equals(lexema)) {
                 return entrada.getKey();
             }

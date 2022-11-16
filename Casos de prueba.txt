@@ -85,3 +85,30 @@ prueba_nombre_programa {
 		return (2.0);
 	};
 }
+
+prueba_nombre_programa {
+	ui16 var1, var2;
+	fun funcion1(ui16 var3) : ui16 {
+		ui16 var1;
+		return (2.0);
+	};
+}
+
+prueba_nombre_programa {
+	ui16 var1, var2;
+	fun funcion1(ui16 var3) : ui16 {
+		f64 var1;
+		ui16 var5;
+		return (2.0);
+	};
+}
+
+prueba_nombre_programa {
+	ui16 var1, var2;
+	fun funcion1(ui16 var3) : ui16 {
+		f64 var1;
+		ui16 var1;
+		ui16 var5;
+		return (2.0);
+	};
+}
