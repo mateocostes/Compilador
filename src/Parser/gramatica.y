@@ -40,16 +40,20 @@ ejecutables         :   ejecutables ejecutable
                     ;
 
 declarativa        	:	funcion ';' { this.declarando = false;}
-					|   tipo { this.declarando = true;} lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
+					|   tipo lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
 													this.declarando = true;
 													String tipoVar = $1.sval;
 													lista_de_variables = (ArrayList<String>)$2.obj;
 													for(String lexema : lista_de_variables) {   // por cada variable declarada
 														int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema); //se obtiene la clave
 														if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
-															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoVar); // se agrega el tipo a la tabla de simbolos
-															this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "variable"); // se agrega el uso a la tabla de simbolos
-															this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, lexema + "." + ambito);	// se actualiza el nombre de la variable en la tabla de simbolos
+															if (this.analizadorLexico.tablaSimbolos.verificarAmbito(lexema)){
+																this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoVar); // se agrega el tipo a la tabla de simbolos
+																this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "variable"); // se agrega el uso a la tabla de simbolos
+																this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, lexema + "." + ambito);	// se actualiza el nombre de la variable en la tabla de simbolos
+															}
+															else 
+																Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + lexema + " ya fue declarada en ese ambito.");
 														}
 													}
 													lista_de_variables.clear();
@@ -78,9 +82,13 @@ funcion         	:	FUN ID '(' lista_parametros ')' ':' tipo '{'  	{Main.estructu
 																		this.declarando = true;
 																		int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc); //se obtiene la clave
 																		if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
-																			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de funcion");	
-																			this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreFunc + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos
+																			if (this.analizadorLexico.tablaSimbolos.verificarAmbito(nombreFunc)){
+																				this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoFunc);
+																				this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de funcion");	
+																				this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreFunc + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos
+																			}
+																			else 
+																				Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La funcion " + nombreFunc + " ya fue declarada en ese ambito.");
 																		this.ambito = ambito + "." + nombreFunc;
 																		};}
 						cuerpo_funcion
@@ -101,9 +109,13 @@ parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this
 								String nombreParam = $2.sval;
 								int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreParam); //se obtiene la clave
 								if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoParam);
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de parametro");
-									this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreParam + "." + ambito);	// se actualiza el nombre de la funcion en la tabla de simbolos									
+									if (this.analizadorLexico.tablaSimbolos.verificarAmbito(nombreParam)){
+										this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoParam);
+										this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "nombre de parametro");
+										this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreParam + "." + ambito);	// se actualiza el nombre del parametro en la tabla de simbolos
+									}
+									else 
+										Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + nombreParam + " ya fue declarada en ese ambito.");
 								};}
 					|	error_parametro
 					;

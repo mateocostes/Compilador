@@ -2,6 +2,7 @@ package AnalizadorLexico;
 
 import java.util.HashMap;
 import java.util.Map;
+import Parser.Parser;
 
 public class TablaSimbolos {
 	public static final int NO_ENCONTRADO = -1;
@@ -21,6 +22,12 @@ public class TablaSimbolos {
     public static int obtenerClave(String lexema) {
         for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
             String lexema_actual = entrada.getValue().get(LEXEMA);
+            //System.out.println("LEXEMA ACTUAL: " + lexema_actual);
+            int posicion =  lexema_actual.indexOf("."); // obtengo la clave solo con el nombre de la variable, sin el ambito
+            if (posicion != -1) {
+                lexema_actual = lexema_actual.substring(0, posicion);
+                //System.out.println("LEXEMA FINAL: " + lexema_actual);
+            }
             if (lexema_actual.equals(lexema)) {
                 return entrada.getKey();
             }
@@ -73,6 +80,40 @@ public class TablaSimbolos {
 
             System.out.println();
         }
+    }
+
+    public static boolean verificarAmbito(String lexema){
+        //Obtengo el lexema con el ambito
+        for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
+            String lexema_actual = entrada.getValue().get(LEXEMA);
+            String lexema_actual_aux = lexema_actual;
+            int posicion =  lexema_actual.indexOf(".");
+            if (posicion != -1)
+                lexema_actual_aux = lexema_actual.substring(0, posicion);
+            if (lexema_actual_aux.equals(lexema))
+                lexema = lexema_actual;
+        }
+        if (!lexema.contains(".")) //primera declaracion de variable
+            return true;
+        else{
+            String ambito_actual = Parser.ambito;
+            System.out.println("ambito_actual1: " + ambito_actual);
+            int posicion =  ambito_actual.lastIndexOf("."); // obtengo la clave solo con el nombre de la variable, sin el ambito
+            if (posicion != -1) {
+                ambito_actual = ambito_actual.substring(posicion + 1, ambito_actual.length());
+            }
+            //Obtengo el ambito del lexema
+            String ambito_lexema = lexema;
+            System.out.println("ambito_lexema1: " + ambito_lexema);
+            posicion = lexema.lastIndexOf(".");
+            if (posicion != -1)
+                ambito_lexema = ambito_lexema.substring(posicion + 1, ambito_lexema.length());
+            System.out.println("ambito_lexema2: " + ambito_lexema);
+            System.out.println("ambito_actual2: " + ambito_actual);
+            if (!ambito_lexema.equals(ambito_actual)) //Pertenecen a diferente ambito
+                return true;
+            return false;
+            }
     }
 
 }
