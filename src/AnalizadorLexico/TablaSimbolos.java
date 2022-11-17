@@ -90,21 +90,21 @@ public class TablaSimbolos {
         }
     }
 
-    public static boolean verificarAmbito(String lexema){
+    public static int obtenerClaveAmbito(String lexema){
         int posicion =  lexema.lastIndexOf(".");
         while (posicion != -1){
             System.out.println("lexema: " + lexema);
             for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
                 String lexema_actual = entrada.getValue().get(LEXEMA);
                 if (lexema_actual.equals(lexema)) //Pertenecen al mismo ambito
-                    return true;
+                    return entrada.getKey();
             } 
             lexema = lexema.substring(0, posicion);
             if (!lexema.contains(".")) // Chequeo que tenga al menos un ambito
-                return false;
+                return NO_ENCONTRADO;
             posicion =  lexema.lastIndexOf(".");
         }
-        return false;
+        return NO_ENCONTRADO;
     }
 
 }

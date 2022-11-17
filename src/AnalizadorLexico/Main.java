@@ -17,6 +17,12 @@ public class Main {
 	public static Polaca polaca = new Polaca();
 	
 	public static void main(String[] args) throws Exception{
+
+		String a = "0";
+		//System.out.println("Hola: " + Integer.valueOf(a));
+		System.out.println("Hola: " + Integer.parseInt(a));
+
+
 		/*//Ventana para seleccionar archivo
 		JFileChooser ventana = new JFileChooser();
 		ventana.setDialogTitle("Elije el codigo fuente");

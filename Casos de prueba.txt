@@ -156,3 +156,25 @@ prueba_nombre_programa {
 		return (2.0);
 	};
 }
+
+prueba_nombre_programa {
+	ui16 var1, var2;
+	fun funcion1(ui16 var1, ui16 var4) : ui16 {
+		ui16 var5;
+		return (2.0);
+	};
+	var2 =: funcion1(var1, var4);
+}
+
+prueba_nombre_programa {
+	ui16 var1, var2;
+	fun funcion1(ui16 var1, ui16 var4) : ui16 {
+		ui16 var5;
+		return (2.0);
+	};
+	fun funcion2(ui16 var1, ui16 var4) : ui16 {
+		ui16 var5;
+		return (2.0);
+	};
+	var2 =: funcion1(var1, var4);
+}
