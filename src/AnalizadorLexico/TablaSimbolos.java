@@ -19,7 +19,7 @@ public class TablaSimbolos {
         ++identificador_siguiente;
     }
 
-    public static int obtenerClaveSinAmbito(String lexema) {
+    public static int obtenerClaveID(String lexema) {
         for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
             String lexema_actual = entrada.getValue().get(LEXEMA);
             int posicion =  lexema_actual.indexOf("."); // obtengo la clave solo con el nombre de la variable, sin el ambito
@@ -94,14 +94,14 @@ public class TablaSimbolos {
         int posicion =  lexema.lastIndexOf(".");
         while (posicion != -1){
             System.out.println("lexema: " + lexema);
-            lexema = lexema.substring(0, posicion);
-            if (!lexema.contains(".")) // Chequeo que tenga al menos un ambito
-                return false;
             for (Map.Entry<Integer, Map<String, String>> entrada: simbolos.entrySet()) {
                 String lexema_actual = entrada.getValue().get(LEXEMA);
                 if (lexema_actual.equals(lexema)) //Pertenecen al mismo ambito
                     return true;
             } 
+            lexema = lexema.substring(0, posicion);
+            if (!lexema.contains(".")) // Chequeo que tenga al menos un ambito
+                return false;
             posicion =  lexema.lastIndexOf(".");
         }
         return false;

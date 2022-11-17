@@ -24,7 +24,7 @@ public class AS2 extends AccionSemantica{
             }
             identificador = AnalizadorLexico.IDENTIFICADOR;
         }
-        if ((TablaSimbolos.obtenerClaveSinAmbito(simbolo) == TablaSimbolos.NO_ENCONTRADO)) //Se agregan todos los identificadores que se encuentren distintos
+        if ((TablaSimbolos.obtenerClaveID(simbolo) == TablaSimbolos.NO_ENCONTRADO)) //Se agregan todos los identificadores que se encuentren distintos
             TablaSimbolos.agregarSimbolo(simbolo);
         Main.tokensLexico.add(identificador);
         return new Token(identificador,simbolo);
