@@ -221,8 +221,8 @@ final static short yylen[] = {                            2,
     6,    1,    6,    1,    1,    5,    1,    0,    4,    1,
     4,    1,    0,    3,    0,    5,    1,    1,    0,    7,
     1,    0,    7,    1,    5,    1,    3,    1,    2,    1,
-    5,    4,    1,    1,    1,    2,    1,    1,    2,    2,
-    3,    2,    2,    3,    1,    3,    3,    2,    2,    6,
+    5,    4,    1,    1,    1,    3,    1,    1,    2,    2,
+    2,    2,    2,    3,    1,    3,    3,    2,    2,    6,
     6,    6,    6,    6,    5,    2,    2,    2,    2,    2,
     2,    2,    2,    2,    2,    2,    2,    4,    4,    5,
     4,    4,    3,    3,    3,    3,    3,    4,    4,    3,
@@ -243,7 +243,7 @@ final static short yydefred[] = {                         0,
     0,    0,   52,   53,    0,    0,    0,    0,    0,    0,
     0,   47,   50,   51,   59,   61,    0,    0,    0,    0,
     0,   42,  184,   92,    0,    0,  139,   20,    0,  207,
-   98,    0,    0,    0,   83,    0,  214,  131,    6,    7,
+   98,    0,    0,    0,   83,    0,  214,  126,    6,    7,
    12,    0,   17,    0,  133,    0,    0,    0,    2,    4,
     0,  229,   11,    0,    0,  120,  136,  134,    0,    0,
   182,    0,    0,    0,   54,   56,  171,  173,    0,    0,
@@ -493,7 +493,7 @@ yytable = new short[]{                         24,
    17,   18,   19,  216,  460,  453,   17,   18,   19,  127,
   133,  132,  134,  235,  236,  243,  235,  236,  245,   83,
    84,   52,   53,   54,   11,   63,   66,   66,   66,   12,
-  130,  126,   15,   83,   84,   28,  272,   64,   11,   17,
+  130,  131,   15,   83,   84,   28,  272,   64,   11,   17,
    18,   19,   99,   12,   94,  420,   15,  255,   85,  191,
     0,    0,    0,   17,   18,   19,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,   83,   84,    0,    0,
@@ -859,12 +859,12 @@ final static String yyrule[] = {
 "bloque_de_sentencias_ejecutables_etiqueta : error_bloque_de_sentencias_ejecutables_etiqueta",
 "error_programa : ID",
 "error_programa : conjunto_sentencias",
-"error_conjunto_sentencias : '{' sentencias",
+"error_conjunto_sentencias : error sentencias '}'",
 "error_conjunto_sentencias : '{'",
 "error_conjunto_sentencias : '}'",
 "error_conjunto_sentencias : '{' '}'",
 "error_conjunto_sentencias : error sentencias",
-"error_conjunto_sentencias : error sentencias '}'",
+"error_conjunto_sentencias : '{' sentencias",
 "error_declarativa : tipo lista_de_variables",
 "error_declarativa : lista_de_variables ';'",
 "error_declarativa : error tipo ';'",
@@ -976,7 +976,7 @@ final static String yyrule[] = {
 "error_bloque_de_sentencias_ejecutables_etiqueta : BREAK ':' etiqueta",
 };
 
-//#line 515 "gramatica.y"
+//#line 516 "gramatica.y"
  
 private AnalizadorLexico analizadorLexico;
 private ArrayList<String> lista_de_variables;
@@ -1002,7 +1002,7 @@ public int yylex(){
 }
 
 public void yyerror(String s){
-    Main.erroresSintacticos.add("[Parser] " + s);
+    Main.erroresSintacticos.add("[Parser]. " + s);
 }
 
 
@@ -1013,17 +1013,17 @@ public void verificarRango() {
   if (id == AnalizadorLexico.CTE_INT) {
 	  int nro = 1; //SOLO SE PERMITEN NUMEROS POSITIVOS
 	  analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(nro));
-      Main.estructurasSintacticas.add("[ Parser, " + analizadorLexico.linea + "] Se actualiza la constante i16 al valor: " + nro);
-      Main.erroresSintacticos.add("[ Parser, " + analizadorLexico.linea + "] Error sintactico: constante i16 fuera de rango");
+      Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
+      Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
   }
   else if (id == analizadorLexico.CTE_DBL) {
     Float flotante = -1*Float.parseFloat(lexema.replace('D', 'e'));
     if (((flotante >= AnalizadorLexico.MINDOUBLEPOS && flotante <= AnalizadorLexico.MAXDOUBLEPOS)) || ((flotante >= AnalizadorLexico.MINDOUBLENEG) && (flotante <= AnalizadorLexico.MAXDOUBLENEG)) || (flotante == 0)) {
     	analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(flotante));
-		Main.estructurasSintacticas.add("[ Parser, " + analizadorLexico.linea + "] Se actualiza la constante f64: " + flotante);
+		Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante f64: " + flotante);
     }
     else {
-      Main.erroresSintacticos.add("[ Parser, " + analizadorLexico.linea + "] Error sintactico: constante f64 fuera de rango");
+      Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante f64 fuera de rango");
     }
   }
 }
@@ -1044,7 +1044,7 @@ public void incorporarInformacionSemantica(String nombreLexema, String tipoLexem
 			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", usoLexema); // se agrega el uso a la tabla de simbolos
 		}
 		else
-			Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La funcion " + nombreLexema + " ya fue declarada en ese ambito.");
+			Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la funcion " + nombreLexema + ", ya fue declarada en ese ambito.");
 	}
 }
 					
@@ -1228,15 +1228,15 @@ case 13:
 break;
 case 15:
 //#line 49 "gramatica.y"
-{yyval = new ParserVal("ui16"); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'UI16'");}
+{yyval = new ParserVal("ui16"); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'UI16'");}
 break;
 case 16:
 //#line 50 "gramatica.y"
-{yyval = new ParserVal("f64"); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'F64'");}
+{yyval = new ParserVal("f64"); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. Se leyo el tipo 'F64'");}
 break;
 case 17:
 //#line 53 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador -> " + val_peek(0).sval);
+{Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. Se leyo el identificador -> " + val_peek(0).sval);
 							lista_de_variables.add(val_peek(0).sval);
                             yyval = new ParserVal(lista_de_variables);}
 break;
@@ -1280,735 +1280,731 @@ break;
 case 34:
 //#line 100 "gramatica.y"
 {this.ambito = this.ambito.substring(0,ambito.lastIndexOf(".")); 
-								Main.estructurasSintacticas.add("[ Parser, " + this.analizadorLexico.linea + "] Warning: funcion vacia");}
+								Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning: funcion vacia");}
 break;
 case 36:
 //#line 105 "gramatica.y"
-{Main.estructurasSintacticas.add("Parser: linea " + this.analizadorLexico.linea + ". Se detecto un retorno de funcion");}
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un retorno de funcion");}
 break;
 case 41:
 //#line 115 "gramatica.y"
 {Main.polaca.addElementPolaca(val_peek(2).sval);}
 break;
-case 43:
-//#line 119 "gramatica.y"
-{ Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una conversion explicita");}
-break;
 case 44:
-//#line 120 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una suma");
+//#line 121 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una suma");
 								Main.polaca.addElementPolaca("+");}
 break;
 case 45:
-//#line 122 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una resta");
+//#line 123 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una resta");
 								Main.polaca.addElementPolaca("-");}
 break;
 case 48:
-//#line 128 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una multiplicacion");
+//#line 129 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una multiplicacion");
 							Main.polaca.addElementPolaca("*");}
 break;
 case 49:
-//#line 130 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una division");
+//#line 131 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una division");
 							Main.polaca.addElementPolaca("/");}
 break;
 case 52:
-//#line 136 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se leyo la constante entera: " + val_peek(0).sval);
+//#line 137 "gramatica.y"
+{Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + val_peek(0).sval);
 									Main.polaca.addElementPolaca(val_peek(0).sval);}
 break;
 case 53:
-//#line 138 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se leyo la constante doble: " + val_peek(0).sval);
+//#line 139 "gramatica.y"
+{Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + val_peek(0).sval);
 									Main.polaca.addElementPolaca(val_peek(0).sval);}
 break;
 case 54:
-//#line 140 "gramatica.y"
+//#line 141 "gramatica.y"
 {verificarRango();}
 break;
 case 55:
-//#line 140 "gramatica.y"
-{yyval = new ParserVal("-"+val_peek(1).sval); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se leyo la constante entera: " + yyval.sval);
+//#line 141 "gramatica.y"
+{yyval = new ParserVal("-"+val_peek(1).sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + yyval.sval);
 									 Main.polaca.addElementPolaca(yyval.sval);}
 break;
 case 56:
-//#line 142 "gramatica.y"
+//#line 143 "gramatica.y"
 {verificarRango();}
 break;
 case 57:
-//#line 142 "gramatica.y"
-{yyval = new ParserVal("-"+val_peek(1).sval); Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se leyo la constante doble: " + yyval.sval);
+//#line 143 "gramatica.y"
+{yyval = new ParserVal("-"+val_peek(1).sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + yyval.sval);
 									Main.polaca.addElementPolaca(yyval.sval);}
 break;
 case 58:
-//#line 144 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se leyo el identificador:  " + val_peek(0).sval);
+//#line 145 "gramatica.y"
+{Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + val_peek(0).sval);
 									String id = val_peek(0).sval;
 									Main.polaca.addElementPolaca(id);
 									Main.polaca.addElementPolaca("=:");
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-										Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");}
+										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
 case 60:
-//#line 154 "gramatica.y"
+//#line 155 "gramatica.y"
 {String id = val_peek(3).sval;
 															Main.polaca.addElementPolaca(id);
-															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se realizo una invocacion a funcion");
+															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una invocacion a funcion");
 															int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); /*se obtiene la clave*/
 															if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-																Main.erroresSintacticos.add("[Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");
+																Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
 															}
 															else{
 																if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
-																	Main.erroresSintacticos.add("[Parser, " + this.analizadorLexico.linea + "] Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion.");
+																	Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
 															}
 															this.cantidad_parametros_reales = 0;}
 break;
 case 67:
-//#line 178 "gramatica.y"
+//#line 179 "gramatica.y"
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + val_peek(0).sval);
 									String id = val_peek(0).sval;
 									Main.polaca.addElementPolaca(id);
 									this.cantidad_parametros_reales++;
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-										Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");}
+										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
 case 68:
-//#line 184 "gramatica.y"
-{Main.polaca.addElementPolaca(val_peek(0).sval);}
-break;
-case 69:
 //#line 185 "gramatica.y"
 {Main.polaca.addElementPolaca(val_peek(0).sval);}
 break;
+case 69:
+//#line 186 "gramatica.y"
+{Main.polaca.addElementPolaca(val_peek(0).sval);}
+break;
 case 70:
-//#line 188 "gramatica.y"
+//#line 189 "gramatica.y"
 {yyval = new ParserVal("<=");}
 break;
 case 71:
-//#line 189 "gramatica.y"
+//#line 190 "gramatica.y"
 {yyval = new ParserVal(">=");}
 break;
 case 72:
-//#line 190 "gramatica.y"
+//#line 191 "gramatica.y"
 {yyval = new ParserVal("=");}
 break;
 case 73:
-//#line 191 "gramatica.y"
+//#line 192 "gramatica.y"
 {yyval = new ParserVal("<");}
 break;
 case 74:
-//#line 192 "gramatica.y"
+//#line 193 "gramatica.y"
 {yyval = new ParserVal(">");}
 break;
 case 75:
-//#line 193 "gramatica.y"
+//#line 194 "gramatica.y"
 {yyval = new ParserVal("=!");}
 break;
 case 83:
-//#line 207 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una sentencia ejecutable con defer");}
+//#line 208 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una sentencia ejecutable con defer");}
 break;
 case 84:
-//#line 210 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una asignacion");
+//#line 211 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion");
 												String id = val_peek(3).sval;
 												Main.polaca.addElementPolaca(id);
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-													Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");}
+													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
 case 86:
-//#line 219 "gramatica.y"
+//#line 220 "gramatica.y"
 {Main.polaca.apilar(Main.polaca.getSize()); 
 														Main.polaca.addElementPolaca(""); 
 														Main.polaca.addElementPolaca("BF");}
 break;
 case 89:
-//#line 226 "gramatica.y"
+//#line 227 "gramatica.y"
 {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
-																			Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un IF");}
+																			Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un IF");}
 break;
 case 90:
-//#line 228 "gramatica.y"
+//#line 229 "gramatica.y"
 {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 																Main.polaca.apilar(Main.polaca.getSize());
 																Main.polaca.addElementPolaca("");
 																Main.polaca.addElementPolaca("BI");}
 break;
 case 93:
-//#line 236 "gramatica.y"
+//#line 237 "gramatica.y"
 {Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());
-																	Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un IF-ELSE");}
+																	Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un IF-ELSE");}
 break;
 case 96:
-//#line 245 "gramatica.y"
+//#line 246 "gramatica.y"
 {Main.polaca.addElementPolaca(val_peek(2).sval);
-												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un mensaje por pantalla");}
+												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");}
 break;
 case 98:
-//#line 250 "gramatica.y"
+//#line 251 "gramatica.y"
 {String id = val_peek(1).sval;
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-										Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");}
+										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
 case 101:
-//#line 257 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una invocacion a un DISCARD");}
+//#line 258 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una invocacion a un DISCARD");}
 break;
 case 103:
-//#line 261 "gramatica.y"
-{Main.polaca.apilar(Main.polaca.getSize());}
-break;
-case 105:
 //#line 262 "gramatica.y"
 {Main.polaca.apilar(Main.polaca.getSize());}
 break;
+case 105:
+//#line 263 "gramatica.y"
+{Main.polaca.apilar(Main.polaca.getSize());}
+break;
 case 108:
-//#line 266 "gramatica.y"
+//#line 267 "gramatica.y"
 {String id = val_peek(0).sval;
 							if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-								Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : La variable " + id + " no fue declarada en ese ambito.");}
+								Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
 case 109:
-//#line 271 "gramatica.y"
+//#line 272 "gramatica.y"
 {Main.polaca.apilar(Main.polaca.getSize());
 																				Main.polaca.addElementPolaca("");
 																				Main.polaca.addElementPolaca("BI");}
 break;
 case 110:
-//#line 274 "gramatica.y"
+//#line 275 "gramatica.y"
 {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 												if (Main.polaca.existeBreak()){ /*Hay un Break*/
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 												Main.polaca.addElementPolaca(Main.polaca.desapilar());
 												Main.polaca.addElementPolaca("BF");
-												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until");}
+												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until");}
 break;
 case 112:
-//#line 283 "gramatica.y"
+//#line 284 "gramatica.y"
 {Main.polaca.apilar(Main.polaca.getSize());
 																								Main.polaca.addElementPolaca("");
 																								Main.polaca.addElementPolaca("BI");}
 break;
 case 113:
-//#line 286 "gramatica.y"
+//#line 287 "gramatica.y"
 {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 														if (Main.polaca.existeBreak()){ /*Hay un Break*/
 															Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 														Main.polaca.addElementPolaca(Main.polaca.desapilar());
 														Main.polaca.addElementPolaca("BF");
-														Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until con etiqueta");}
+														Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until con etiqueta");}
 break;
 case 115:
-//#line 296 "gramatica.y"
-{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto una asignacion do until");
+//#line 297 "gramatica.y"
+{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion do-until");
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 													if (Main.polaca.existeBreak()){ /*Hay un Break*/
 														Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 													Main.polaca.addElementPolaca(Main.polaca.desapilar());
 													Main.polaca.addElementPolaca("BF");
-													Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "] se detecto un do-until");}
+													Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until");}
 break;
 case 117:
-//#line 306 "gramatica.y"
+//#line 307 "gramatica.y"
 {Main.polaca.contieneBreak();
 															Main.polaca.apilar(Main.polaca.getSize());
 															Main.polaca.addElementPolaca("");
 															Main.polaca.addElementPolaca("BI");}
 break;
 case 119:
-//#line 311 "gramatica.y"
+//#line 312 "gramatica.y"
 {Main.polaca.contieneBreak();
 												Main.polaca.apilar(Main.polaca.getSize());
 												Main.polaca.addElementPolaca("");
 												Main.polaca.addElementPolaca("BI");}
 break;
 case 121:
-//#line 319 "gramatica.y"
+//#line 320 "gramatica.y"
 {Main.polaca.contieneBreak();
 																					Main.polaca.apilar(Main.polaca.getSize());
 																					Main.polaca.addElementPolaca("");
 																					Main.polaca.addElementPolaca("BI");}
 break;
 case 122:
-//#line 323 "gramatica.y"
+//#line 324 "gramatica.y"
 {Main.polaca.contieneBreak();
 																		Main.polaca.apilar(Main.polaca.getSize());
 																		Main.polaca.addElementPolaca("");
 																		Main.polaca.addElementPolaca("BI");}
 break;
 case 124:
-//#line 332 "gramatica.y"
-{Main.erroresSintacticos.add("Error sintactico: falta el bloque de programa junto con sus llaves");}
+//#line 333 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de programa junto con sus llaves");}
 break;
 case 125:
-//#line 333 "gramatica.y"
-{Main.erroresSintacticos.add("Error sintactico: Falta el nombre del programa");}
+//#line 334 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el nombre del programa");}
 break;
 case 126:
-//#line 336 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Se detecto un bloque sin llave de cierre");}
+//#line 337 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, se detecto un bloque sin llave de apertura");}
 break;
 case 127:
-//#line 337 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Falta el bloque de sentencia/s y la llave de cierre");}
+//#line 338 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencia/s y la llave de cierre");}
 break;
 case 128:
-//#line 338 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Falta el bloque de sentencia/s y la llave de apertura");}
+//#line 339 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencia/s y la llave de apertura");}
 break;
 case 129:
-//#line 339 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Falta/n sentencia/s dentro del '{' '}'");}
+//#line 340 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta/n sentencia/s dentro de las '{' '}'");}
 break;
 case 130:
-//#line 340 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Faltan las llaves de apertura y cierre");}
+//#line 341 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, faltan las llaves de apertura y cierre");}
 break;
 case 131:
-//#line 341 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Se detecto un bloque sin llave de apertura");}
+//#line 342 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, se detecto un bloque sin llave de cierre");}
 break;
 case 132:
-//#line 345 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Eror: falta el ; para terminar la declaracion");}
+//#line 346 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ; para terminar la declaracion");}
 break;
 case 133:
-//#line 346 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Falta el tipo de las variables");}
+//#line 347 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el tipo de las variables");}
 break;
 case 134:
-//#line 347 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: falta/n la/s variable/s");}
+//#line 348 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta/n la/s variable/s");}
 break;
 case 135:
-//#line 348 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: falta ; al terminar la declaracion de la funcion");}
+//#line 349 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta ; al terminar la declaracion de la funcion");}
 break;
 case 136:
-//#line 352 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta un identificador antes de la ','");}
+//#line 353 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta un identificador antes de la ','");}
 break;
 case 137:
-//#line 353 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta un identificador luego de la ','");}
+//#line 354 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta un identificador luego de la ','");}
 break;
 case 138:
-//#line 357 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la palabra reservada fun al principio de la declaracion de la funcion");}
+//#line 358 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la palabra reservada fun al principio de la declaracion de la funcion");}
 break;
 case 139:
-//#line 358 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el nombre de la funcion");}
+//#line 359 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el nombre de la funcion");}
 break;
 case 140:
-//#line 361 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de apertura para los parametros");}
+//#line 362 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura para los parametros");}
 break;
 case 141:
-//#line 362 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de cierre para los parametros");}
+//#line 363 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre para los parametros");}
 break;
 case 142:
-//#line 363 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el ':' luego de los parametros");}
+//#line 364 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego de los parametros");}
 break;
 case 143:
-//#line 364 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el tipo de retorno de la funcion");}
+//#line 365 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el tipo de retorno de la funcion");}
 break;
 case 144:
-//#line 365 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta la llave de apertura del cuerpo de la funcion");}
+//#line 366 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de apertura del cuerpo de la funcion");}
 break;
 case 145:
-//#line 368 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros: No se puede tener mas de dos parametros");}
+//#line 369 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros, no se puede tener mas de dos parametros");}
 break;
 case 146:
-//#line 369 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros: Falta un parametro antes de la ','");}
+//#line 370 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros, falta un parametro antes de la ','");}
 break;
 case 147:
-//#line 370 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros: Falta un parametro luego de la ','");}
+//#line 371 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros, falta un parametro luego de la ','");}
 break;
 case 148:
-//#line 371 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros: Falta la ',' separando los parametros");}
+//#line 372 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros, falta la ',' separando los parametros");}
 break;
 case 149:
-//#line 374 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion del parametro: Falta el tipo del parametro");}
+//#line 375 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion del parametro, falta el tipo del parametro");}
 break;
 case 150:
-//#line 375 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion del parametro: Falta el identificador del parametro");}
+//#line 376 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion del parametro, falta el identificador del parametro");}
 break;
 case 151:
-//#line 378 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta la llave de cierre");}
+//#line 379 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en el cuerpo de la funcion, falta la llave de cierre");}
 break;
 case 152:
-//#line 379 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el cuerpo de la funcion: falta el retorno");}
+//#line 380 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en el cuerpo de la funcion, falta el retorno");}
 break;
 case 153:
-//#line 383 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el retorno de la funcion: falta el ';'");}
+//#line 384 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en el retorno de la funcion, falta el ';'");}
 break;
 case 154:
-//#line 384 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en el retorno de la funcion: falta la sentencia de retorno");}
+//#line 385 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en el retorno de la funcion, falta la sentencia de retorno");}
 break;
 case 155:
-//#line 388 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura de la expresion");}
+//#line 389 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura de la expresion");}
 break;
 case 156:
-//#line 389 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre de la expresion");}
+//#line 390 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre de la expresion");}
 break;
 case 157:
-//#line 390 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : No se puede retornar vacio");}
+//#line 391 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, no se puede retornar vacio");}
 break;
 case 158:
-//#line 394 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico: Falta el parentesis de apertura de la condicion");}
+//#line 395 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura de la condicion");}
 break;
 case 159:
-//#line 395 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la primera expresion en la condicion");}
+//#line 396 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la primera expresion en la condicion");}
 break;
 case 160:
-//#line 396 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el comparador en la condicion");}
+//#line 397 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el comparador en la condicion");}
 break;
 case 161:
-//#line 397 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la segunda expresion en la condicion");}
+//#line 398 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la segunda expresion en la condicion");}
 break;
 case 162:
-//#line 398 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre de la condicion");}
+//#line 399 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre de la condicion");}
 break;
 case 163:
-//#line 399 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : No se permite la condicion vacia");}
+//#line 400 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, no se permite la condicion vacia");}
 break;
 case 164:
-//#line 400 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Faltan los parentesis de la condicion");}
+//#line 401 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, faltan los parentesis de la condicion");}
 break;
 case 165:
-//#line 403 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el segundo termino de la suma");}
+//#line 404 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "].Error sintactico, falta el segundo termino de la suma");}
 break;
 case 166:
-//#line 404 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el segundo termino de la resta");}
+//#line 405 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "].Error sintactico, falta el segundo termino de la resta");}
 break;
 case 167:
-//#line 405 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el primer termino de la suma");}
+//#line 406 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "].Error sintactico, falta el primer termino de la suma");}
 break;
 case 168:
-//#line 406 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura de la expresion");}
+//#line 407 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura de la expresion");}
 break;
 case 169:
-//#line 407 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre de la expresion");}
+//#line 408 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre de la expresion");}
 break;
 case 170:
-//#line 408 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Faltan los parentesis de la expresion");}
+//#line 409 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, faltan los parentesis de la expresion");}
 break;
 case 171:
-//#line 411 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el primer factor de la multiplicacion");}
+//#line 412 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el primer factor de la multiplicacion");}
 break;
 case 172:
-//#line 412 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el segundo factor de la multiplicacion");}
+//#line 413 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el segundo factor de la multiplicacion");}
 break;
 case 173:
-//#line 413 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el primer factor de la division");}
+//#line 414 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el primer factor de la division");}
 break;
 case 174:
-//#line 414 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el segundo factor de la division");}
+//#line 415 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el segundo factor de la division");}
 break;
 case 175:
-//#line 417 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en los parametros de la funcion invocada");}
+//#line 418 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre en los parametros de la funcion invocada");}
 break;
 case 176:
-//#line 420 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros en la invocacion de la funcion: No se puede tener mas de dos parametros reales");}
+//#line 421 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros en la invocacion de la funcion: No se puede tener mas de dos parametros reales");}
 break;
 case 177:
-//#line 421 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros en la invocacion de la funcion: Falta un parametro antes de la ','");}
+//#line 422 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros en la invocacion de la funcion: Falta un parametro antes de la ','");}
 break;
 case 178:
-//#line 422 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros en la invocacion de la funcion: Falta un parametro luego de la ','");}
+//#line 423 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros en la invocacion de la funcion: Falta un parametro luego de la ','");}
 break;
 case 179:
-//#line 423 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico en la declaracion de los parametros en la invocacion de la funcion: Falta la ',' separando los parametros");}
+//#line 424 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico en la declaracion de los parametros en la invocacion de la funcion: Falta la ',' separando los parametros");}
 break;
 case 180:
-//#line 426 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el identificador de la variable a asignar");}
+//#line 427 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el identificador de la variable a asignar");}
 break;
 case 181:
-//#line 427 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el signo de asignacion");}
+//#line 428 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el signo de asignacion");}
 break;
 case 182:
-//#line 428 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la expresion a asignar");}
+//#line 429 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la expresion a asignar");}
 break;
 case 183:
-//#line 429 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' en la sentencia de asignacion");}
+//#line 430 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' en la sentencia de asignacion");}
 break;
 case 184:
-//#line 432 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la condicion en la sentencia de seleccion");}
+//#line 433 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion en la sentencia de seleccion");}
 break;
 case 185:
-//#line 433 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el cuerpo de la seleccion");}
+//#line 434 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el cuerpo de la seleccion");}
 break;
 case 186:
-//#line 436 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el then en la sentencia de seleccion");}
+//#line 437 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el then en la sentencia de seleccion");}
 break;
 case 187:
-//#line 437 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias de la seleccion");}
+//#line 438 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de apertura antes del bloque de sentencias de la seleccion");}
 break;
 case 188:
-//#line 438 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias en la sentencia de seleccion");}
+//#line 439 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias en la sentencia de seleccion");}
 break;
 case 189:
-//#line 439 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");}
+//#line 440 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");}
 break;
 case 190:
-//#line 440 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el then en la sentencia de seleccion");}
+//#line 441 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el then en la sentencia de seleccion");}
 break;
 case 191:
-//#line 441 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias de la seleccion");}
+//#line 442 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de apertura antes del bloque de sentencias de la seleccion");}
 break;
 case 192:
-//#line 442 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias en la sentencia de seleccion");}
+//#line 443 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias en la sentencia de seleccion");}
 break;
 case 193:
-//#line 443 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");}
+//#line 444 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de cierre del bloque de sentencias en la sentencia de seleccion");}
 break;
 case 194:
-//#line 444 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el end_if de la seleccion");}
+//#line 445 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el end_if de la seleccion");}
 break;
 case 195:
-//#line 445 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de seleccion");}
+//#line 446 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la sentencia de seleccion");}
 break;
 case 196:
-//#line 448 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el else luego del primer bloque de sentencias de la seleccion");}
+//#line 449 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el else luego del primer bloque de sentencias de la seleccion");}
 break;
 case 197:
-//#line 449 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de apertura antes del bloque de sentencias luego del else");}
+//#line 450 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de apertura antes del bloque de sentencias luego del else");}
 break;
 case 198:
-//#line 450 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias luego del else");}
+//#line 451 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias luego del else");}
 break;
 case 199:
-//#line 451 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave de cierre del bloque de sentencias luego del else");}
+//#line 452 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave de cierre del bloque de sentencias luego del else");}
 break;
 case 200:
-//#line 452 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el end_if de la seleccion");}
+//#line 453 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el end_if de la seleccion");}
 break;
 case 201:
-//#line 453 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de seleccion");}
+//#line 454 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la sentencia de seleccion");}
 break;
 case 202:
-//#line 456 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el out en la sentencia de mensaje por pantalla");}
+//#line 457 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el out en la sentencia de mensaje por pantalla");}
 break;
 case 203:
-//#line 457 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la sentencia de mensaje por pantalla");}
+//#line 458 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura en la sentencia de mensaje por pantalla");}
 break;
 case 204:
-//#line 458 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en la sentencia de mensaje por pantalla");}
+//#line 459 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre en la sentencia de mensaje por pantalla");}
 break;
 case 205:
-//#line 459 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la sentencia de mensaje por pantalla");}
+//#line 460 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la sentencia de mensaje por pantalla");}
 break;
 case 206:
-//#line 460 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la cadena en el mensaje por pantalla");}
+//#line 461 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la cadena en el mensaje por pantalla");}
 break;
 case 207:
-//#line 463 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el nombre de la funcion discard");}
+//#line 464 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el nombre de la funcion discard");}
 break;
 case 208:
-//#line 466 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura de los parametros de la funcion discard");}
+//#line 467 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura de los parametros de la funcion discard");}
 break;
 case 209:
-//#line 467 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la lista de parametros reales de la funcion discard");}
+//#line 468 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la lista de parametros reales de la funcion discard");}
 break;
 case 210:
-//#line 468 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre de los parametros de la funcion discard");}
+//#line 469 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre de los parametros de la funcion discard");}
 break;
 case 211:
-//#line 469 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' al final de la funcion discard");}
+//#line 470 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' al final de la funcion discard");}
 break;
 case 212:
-//#line 472 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el do en la sentencia do_until");}
+//#line 473 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el do en la sentencia do_until");}
 break;
 case 213:
-//#line 473 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la etiqueta en la sentencia do_until");}
+//#line 474 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego de la etiqueta en la sentencia do_until");}
 break;
 case 214:
-//#line 474 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la etiqueta antes de los ':' en la sentencia do_until");}
+//#line 475 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta antes de los ':' en la sentencia do_until");}
 break;
 case 215:
-//#line 478 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
+//#line 479 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
 break;
 case 216:
-//#line 479 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias ejecutables en la sentencia do_until");}
+//#line 480 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias ejecutables en la sentencia do_until");}
 break;
 case 217:
-//#line 480 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
+//#line 481 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
 break;
 case 218:
-//#line 481 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el until luego del bloque de sentencias en la sentencia do_until");}
+//#line 482 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el until luego del bloque de sentencias en la sentencia do_until");}
 break;
 case 219:
-//#line 482 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la condicion luego del until en la sentencia do_until");}
+//#line 483 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion luego del until en la sentencia do_until");}
 break;
 case 220:
-//#line 485 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
+//#line 486 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
 break;
 case 221:
-//#line 486 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el bloque de sentencias ejecutables en la sentencia do_until");}
+//#line 487 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias ejecutables en la sentencia do_until");}
 break;
 case 222:
-//#line 487 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
+//#line 488 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
 break;
 case 223:
-//#line 488 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el until luego del bloque de sentencias en la sentencia do_until con etiqueta");}
+//#line 489 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el until luego del bloque de sentencias en la sentencia do_until con etiqueta");}
 break;
 case 224:
-//#line 489 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la condicion luego del until en la sentencia do_until con etiqueta");}
+//#line 490 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion luego del until en la sentencia do_until con etiqueta");}
 break;
 case 225:
-//#line 492 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego de la condicion en la sentencia do_until");}
+//#line 493 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego de la condicion en la sentencia do_until");}
 break;
 case 226:
-//#line 493 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de apertura en la asignacion del do_until");}
+//#line 494 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura en la asignacion del do_until");}
 break;
 case 227:
-//#line 494 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Error en la asignacion del do_until");}
+//#line 495 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, error en la asignacion del do_until");}
 break;
 case 228:
-//#line 495 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el parentesis de cierre en la asignacion del do_until");}
+//#line 496 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre en la asignacion del do_until");}
 break;
 case 229:
-//#line 498 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta al menos una sentencia ejecutable dentro del bloque de sentencias");}
+//#line 499 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta al menos una sentencia ejecutable dentro del bloque de sentencias");}
 break;
 case 230:
-//#line 499 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el break luego de la sentencia ejecutable");}
+//#line 500 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break luego de la sentencia ejecutable");}
 break;
 case 231:
-//#line 500 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego del break");}
+//#line 501 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego del break");}
 break;
 case 232:
-//#line 501 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego del break");}
+//#line 502 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego del break");}
 break;
 case 233:
-//#line 504 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el break luego de la sentencia");}
+//#line 505 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break luego de la sentencia");}
 break;
 case 234:
-//#line 505 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego del break");}
+//#line 506 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego del break");}
 break;
 case 235:
-//#line 506 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la etiqueta luego del ':'");}
+//#line 507 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta luego del ':'");}
 break;
 case 236:
-//#line 507 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la etiqueta");}
+//#line 508 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la etiqueta");}
 break;
 case 237:
-//#line 508 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el break antes del ':'");}
+//#line 509 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break antes del ':'");}
 break;
 case 238:
-//#line 509 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ':' luego del break");}
+//#line 510 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego del break");}
 break;
 case 239:
-//#line 510 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta la etiqueta luego del ':'");}
+//#line 511 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta luego del ':'");}
 break;
 case 240:
-//#line 511 "gramatica.y"
-{Main.erroresSintacticos.add("[ Parser, " + this.analizadorLexico.linea + "] Error sintactico : Falta el ';' luego de la etiqueta");}
+//#line 512 "gramatica.y"
+{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la etiqueta");}
 break;
-//#line 1935 "Parser.java"
+//#line 1931 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

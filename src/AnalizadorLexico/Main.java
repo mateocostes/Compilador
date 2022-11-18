@@ -39,11 +39,11 @@ public class Main {
 			String direccion = file.getPath();*/
 			String direccion = "";
 			//Direccion Mateo PC
-			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
+			//direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 			//Direccion Mateo Notebook
 			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
 			//Direccion Franco
-			//direccion = "C:\Users\Franco\Desktop\Nuevacarpeta\repoCompi\test.txt";
+			direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
 			AnalizadorLexico analizadorLexico = new AnalizadorLexico(Codigo);
 	        Parser p = new Parser(analizadorLexico);
