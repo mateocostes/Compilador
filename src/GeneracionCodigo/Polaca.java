@@ -17,6 +17,7 @@ public class Polaca {
 	}
 	
 	public static void apilar(int indice) {
+		System.out.println("indice: " + indice);
 		pila.push(indice);
 	}
 

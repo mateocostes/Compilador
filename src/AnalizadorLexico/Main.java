@@ -17,12 +17,6 @@ public class Main {
 	public static Polaca polaca = new Polaca();
 	
 	public static void main(String[] args) throws Exception{
-
-		String a = "0";
-		//System.out.println("Hola: " + Integer.valueOf(a));
-		System.out.println("Hola: " + Integer.parseInt(a));
-
-
 		/*//Ventana para seleccionar archivo
 		JFileChooser ventana = new JFileChooser();
 		ventana.setDialogTitle("Elije el codigo fuente");
@@ -39,11 +33,11 @@ public class Main {
 			String direccion = file.getPath();*/
 			String direccion = "";
 			//Direccion Mateo PC
-			//direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
+			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 			//Direccion Mateo Notebook
 			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
 			//Direccion Franco
-			direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
+			//direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
 			AnalizadorLexico analizadorLexico = new AnalizadorLexico(Codigo);
 	        Parser p = new Parser(analizadorLexico);

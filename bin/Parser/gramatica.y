@@ -21,7 +21,11 @@ programa            :   ID {String nombre_programa = $1.sval;
                     |   error_programa
                     ;
 					
-conjunto_sentencias	: 	'{' sentencias '}'
+conjunto_sentencias	: 	'{' sentencias '}' 	{if (this.existeDefer){
+												this.existeDefer = false;
+												Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
+												Main.polaca.addElementPolaca(Main.polaca.desapilar()); // Apilo el comienzo del defer
+												Main.polaca.addElementPolaca("JD");}} //CONSULTAR
 					| 	error_conjunto_sentencias
 					;
 					
@@ -96,9 +100,19 @@ parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this
 					|	error_parametro
 					;
 			
-cuerpo_funcion      :   sentencias retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf("."));} //se vuelve al ambito anterior
+cuerpo_funcion      :   sentencias retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf("."));
+												if (this.existeDefer){
+													this.existeDefer = false;
+													Main.polaca.addElementPolaca(Main.polaca.desapilar());
+													Main.polaca.addElementPolaca("JD"); //CONSULTAR
+													Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());}} //se vuelve al ambito anterior
                     |   retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf(".")); 
-								Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning: funcion vacia");}
+									Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning: funcion vacia");
+									if (this.existeDefer){
+										this.existeDefer = false;
+										Main.polaca.addElementPolaca(Main.polaca.desapilar());
+										Main.polaca.addElementPolaca("JD"); //CONSULTAR
+										Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());}}
                     |   error_cuerpo_funcion
                     ;    
 
@@ -115,9 +129,8 @@ condicion           :  '(' expresion comparador expresion ')'
 							{Main.polaca.addElementPolaca($3.sval);} //Guarda el comparador utilizando $$ en comparador
                     |	error_condicion
 					;
-// en termino, porque añadimos el mensaje de conversion explicita?	
 								
-expresion		    :   termino //{ Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una conversion explicita");} 
+expresion		    :   termino
 					|	expresion '+' termino {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una suma");
 								Main.polaca.addElementPolaca("+");}
                     |   expresion '-' termino {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una resta");
@@ -145,7 +158,6 @@ factor       		:   CTE_INT  {Main.estructurasSintacticas.add("[Lexico: linea " +
 					|   ID          {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + $1.sval);
 									String id = $1.sval;
 									Main.polaca.addElementPolaca(id);
-									Main.polaca.addElementPolaca("=:");
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 									
@@ -205,7 +217,16 @@ ejecutable_comun	: 	asignacion
 					|	expresion_dountil
 					;
 					
-ejecutable_defer	: 	DEFER ejecutable_comun {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una sentencia ejecutable con defer");}
+ejecutable_defer	: 	DEFER 	{this.existeDefer = true;
+								Main.polaca.apilar(Main.polaca.getSize() + 2); //Se apila para marcar el inicio del defer
+								Main.polaca.apilar(Main.polaca.getSize()); //Se apila para continuar la ejecutacion y luego ir al defer
+								Main.polaca.addElementPolaca(""); 
+								Main.polaca.addElementPolaca("JDI");} //CONSULTAR
+						ejecutable_comun 	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una sentencia ejecutable con defer");
+											Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
+											Main.polaca.apilar(Main.polaca.getSize());
+											Main.polaca.addElementPolaca(""); 
+											Main.polaca.addElementPolaca("JDF");} //CONSULTAR
 					;	
 				
 asignacion			:	ID ASSIGN expresion ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion");
@@ -260,13 +281,14 @@ parametros_discard	:	'(' lista_parametros_reales ')' ';' {Main.estructurasSintac
 					;
 					
 expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_dountil
-					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_dountil_etiqueta
+					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());
+										String nombre_etiqueta = $1.sval;
+										incorporarInformacionSemantica(nombre_etiqueta, "", "etiqueta", this.ambito);}
+						cuerpo_dountil_etiqueta
 					|	error_dountil
 					;
 					
-etiqueta			: 	ID	{String id = $1.sval;
-							if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-								Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
+etiqueta			: 	ID
 					;
 
 cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
@@ -285,22 +307,16 @@ cuerpo_dountil_etiqueta	:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTI
 																								Main.polaca.addElementPolaca("");
 																								Main.polaca.addElementPolaca("BI");}
 							asignacion_do_until {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
-														if (Main.polaca.existeBreak()){ //Hay un Break
-															Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
-														Main.polaca.addElementPolaca(Main.polaca.desapilar());
-														Main.polaca.addElementPolaca("BF");
-														Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until con etiqueta");}
+												if (Main.polaca.existeBreak()){ //Hay un Break
+													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
+												Main.polaca.addElementPolaca(Main.polaca.desapilar());
+												Main.polaca.addElementPolaca("BF");
+												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until con etiqueta");}
 						|	error_cuerpo_dountil_etiqueta
 						;
 
 
-asignacion_do_until :	':' '(' asignacion ')' ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion do-until");
-													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
-													if (Main.polaca.existeBreak()){ //Hay un Break
-														Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
-													Main.polaca.addElementPolaca(Main.polaca.desapilar());
-													Main.polaca.addElementPolaca("BF");
-													Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until");}
+asignacion_do_until :	':' '(' asignacion ')' ';'
 					|	error_asignacion_do_until
 					;
 					
@@ -320,11 +336,18 @@ bloque_de_sentencias_ejecutables 	:	ejecutables BREAK ';' {Main.polaca.contieneB
 bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables BREAK ':' etiqueta ';' {Main.polaca.contieneBreak();
 																					Main.polaca.apilar(Main.polaca.getSize());
 																					Main.polaca.addElementPolaca("");
-																					Main.polaca.addElementPolaca("BI");}
+																					Main.polaca.addElementPolaca("BI");
+																					String nombre_etiqueta = $4.sval;
+																					if (!(this.analizadorLexico.tablaSimbolos.existeEtiqueta(nombre_etiqueta + "." + this.ambito)))
+																						Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la etiqueta " + nombre_etiqueta + " no se corresponde con la etiqueta del do-until");}
+																						
 											|	BREAK ':' etiqueta ';' {Main.polaca.contieneBreak();
 																		Main.polaca.apilar(Main.polaca.getSize());
 																		Main.polaca.addElementPolaca("");
-																		Main.polaca.addElementPolaca("BI");}
+																		Main.polaca.addElementPolaca("BI");
+																		String nombre_etiqueta = $3.sval;
+																		if (!(this.analizadorLexico.tablaSimbolos.existeEtiqueta(nombre_etiqueta + "." + this.ambito)))
+																			Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la etiqueta " + nombre_etiqueta + " no se corresponde con la etiqueta del do-until");}
 											|	error_bloque_de_sentencias_ejecutables_etiqueta
 											;
 									
@@ -520,6 +543,7 @@ public static int cantidad_parametros = 0;
 public static int cantidad_parametros_reales = 0;
 public static String nombre_funcion;
 public static String ambito;
+public static boolean existeDefer = false;
 
 public Parser(AnalizadorLexico analizadorLexico)
 {
@@ -567,7 +591,8 @@ public void verificarRango() {
 public void incorporarInformacionSemantica(String nombreLexema, String tipoLexema, String usoLexema, String ambitoLexema){
 	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreLexema); //se obtiene la clave
 	if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
-		this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoLexema); // se agrega el tipo a la tabla de simbolos
+		if (usoLexema != "etiqueta")
+			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoLexema); // se agrega el tipo a la tabla de simbolos
 		this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", usoLexema); // se agrega el uso a la tabla de simbolos
 		this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, nombreLexema + "." + ambitoLexema);	// se actualiza el nombre de la variable en la tabla de simbolos
 	}
@@ -576,11 +601,12 @@ public void incorporarInformacionSemantica(String nombreLexema, String tipoLexem
 		if(clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si no esta declarada
 			this.analizadorLexico.tablaSimbolos.agregarSimbolo(nombreLexema + "." + ambitoLexema);	// se actualiza el nombre de la variable en la tabla de simbolos
 			clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreLexema + "." + ambitoLexema); //se obtiene la clave
-			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoLexema); // se agrega el tipo a la tabla de simbolos
+			if (usoLexema != "etiqueta")
+				this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", tipoLexema); // se agrega el tipo a la tabla de simbolos
 			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", usoLexema); // se agrega el uso a la tabla de simbolos
 		}
 		else
-			Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la funcion " + nombreLexema + ", ya fue declarada en ese ambito.");
+			Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico " + nombreLexema + ", ya fue declarada en ese ambito.");
 	}
 }
 					
