@@ -194,3 +194,10 @@ prueba_nombre_programa {
 	}
 	until (var1 = var2) : (var3 =: 2;);
 }
+
+prueba_nombre_programa {
+	ui16 var1, var2, var3;
+	var1 =: 1;
+	defer var2 =: 2;
+	var3 =: 3;
+}
