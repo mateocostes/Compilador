@@ -995,6 +995,7 @@ public static int cantidad_parametros_reales = 0;
 public static String nombre_funcion;
 public static String ambito;
 public static boolean existeDefer = false;
+public static boolean agregoCteDbl = false;
 
 public Parser(AnalizadorLexico analizadorLexico)
 {
@@ -1018,20 +1019,28 @@ public void yyerror(String s){
 
 
 public void actualizarRango() {
-  String lexema = yylval.sval;
-  int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema);
-  String tipo = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "tipo");
-  if (tipo.equals(this.analizadorLexico.CTE_INT_TYPE)){ //Pasar valor desde analizador lexico
+	String lexema = yylval.sval;
+	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema);
+	String tipo = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "tipo");
+	if (tipo.equals(this.analizadorLexico.CTE_INT_TYPE)){ //Pasar valor desde analizador lexico
 	  int nro = 1; //SOLO SE PERMITEN NUMEROS POSITIVOS
 	  analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(nro));
-      Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
-      Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
-  }
-  else if (tipo.equals(this.analizadorLexico.CTE_DBL_TYPE)) {
-	String flotante = "-" + lexema;
-    analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, flotante);
-    }
- }
+	  Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
+	  Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
+	}
+	else if (tipo.equals(this.analizadorLexico.CTE_DBL_TYPE)) {
+		String flotante = "-" + lexema;
+		if (this.agregoCteDbl){
+			analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, flotante);
+		}
+		else {
+			analizadorLexico.tablaSimbolos.agregarSimbolo(flotante);
+            clave = analizadorLexico.tablaSimbolos.obtenerClave(flotante);
+            analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", this.analizadorLexico.CTE_DBL_TYPE);
+            Parser.agregoCteDbl = false;
+		}
+	}
+}
 
 public void incorporarInformacionSemantica(String nombreLexema, String tipoLexema, String usoLexema, String ambitoLexema){
 	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreLexema); //se obtiene la clave
@@ -1062,7 +1071,7 @@ public void incorporarInformacionSemantica(String nombreLexema, String tipoLexem
 					
 					
 					
-//#line 994 "Parser.java"
+//#line 1003 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -2044,7 +2053,7 @@ case 241:
 //#line 547 "gramatica.y"
 {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la etiqueta");}
 break;
-//#line 1971 "Parser.java"
+//#line 1980 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

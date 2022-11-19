@@ -1,11 +1,13 @@
 package AccionesSemanticas;
 import AnalizadorLexico.*;
+import Parser.Parser;
 
 public class AS4 extends AccionSemantica{
 	
 	@Override
     public Token ejecutar() {
         String simbolo = buffer;
+        Parser.agregoCteDbl = false;
         if ((AnalizadorLexico.caracter != AnalizadorLexico.NUEVALINEA) || (AnalizadorLexico.caracter != AnalizadorLexico.BLANCO) || ((AnalizadorLexico.caracter != AnalizadorLexico.TAB)))
         	AnalizadorLexico.cursor--;
         String exp = simbolo.replace("D", "e"); //PARA LEER EXPONENCIAL
@@ -21,7 +23,9 @@ public class AS4 extends AccionSemantica{
         if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO) {
             TablaSimbolos.agregarSimbolo(simbolo);
             int clave = TablaSimbolos.obtenerClave(simbolo);
-            TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf("f64"));
+            //TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf("f64"));
+            TablaSimbolos.agregarAtributo(clave, "tipo", AnalizadorLexico.CTE_DBL_TYPE);
+            Parser.agregoCteDbl = true;
         }
         Main.tokensLexico.add(AnalizadorLexico.CTE_DBL_TYPE);
         return new Token(AnalizadorLexico.CTE_DBL, simbolo);

@@ -207,3 +207,11 @@ prueba_lexico_flotantes{
 	var_dbl1 =: 2.;
 	var_dbl2 =: -2.;
 }
+
+prueba_lexico_flotantes{
+	f64 var_dbl1, var_dbl2, var_dbl3, var_dbl4;
+	var_dbl1 =: -1.;
+	var_dbl2 =: 2.;
+	var_dbl3 =: 1.;
+	var_dbl4 =: -2.;
+}

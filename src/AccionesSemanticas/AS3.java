@@ -16,7 +16,8 @@ public class AS3 extends AccionSemantica{
         if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO) {
             TablaSimbolos.agregarSimbolo(simbolo);
             int clave = TablaSimbolos.obtenerClave(simbolo);
-            TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf("ui16"));
+            //TablaSimbolos.agregarAtributo(clave, "tipo", String.valueOf("ui16"));
+            TablaSimbolos.agregarAtributo(clave, "tipo", AnalizadorLexico.CTE_INT_TYPE);
         }
         Main.tokensLexico.add(AnalizadorLexico.CTE_INT_TYPE);
         return new Token(AnalizadorLexico.CTE_INT, simbolo);
