@@ -201,3 +201,9 @@ prueba_nombre_programa {
 	defer var2 =: 2;
 	var3 =: 3;
 }
+
+prueba_lexico_flotantes{
+	f64 var_dbl1, var_dbl2;
+	var_dbl1 =: 2.;
+	var_dbl2 =: -2.;
+}

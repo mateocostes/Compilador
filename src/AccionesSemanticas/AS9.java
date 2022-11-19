@@ -9,7 +9,7 @@ public class AS9 extends AccionSemantica{
     @Override
     public Token ejecutar() {
     	String simbolo = buffer;
-    	Main.tokensLexico.add(AnalizadorLexico.CADENA);
+    	Main.tokensLexico.add(AnalizadorLexico.CADENA_TYPE);
         if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO)
             TablaSimbolos.agregarSimbolo(simbolo);
         return new Token(AnalizadorLexico.CADENA, simbolo);

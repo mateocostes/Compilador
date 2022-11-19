@@ -25,7 +25,7 @@ conjunto_sentencias	: 	'{' sentencias '}' 	{if (this.existeDefer){
 												this.existeDefer = false;
 												Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 												Main.polaca.addElementPolaca(Main.polaca.desapilar()); // Apilo el comienzo del defer
-												Main.polaca.addElementPolaca("JD");}} //CONSULTAR
+												Main.polaca.addElementPolaca("JBD");}} // JUMP BEGIN DEFER CONSULTAR
 					| 	error_conjunto_sentencias
 					;
 					
@@ -103,16 +103,16 @@ parametro			:	tipo ID  {Main.estructurasSintacticas.add("[Parser: linea " + this
 cuerpo_funcion      :   sentencias retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf("."));
 												if (this.existeDefer){
 													this.existeDefer = false;
-													Main.polaca.addElementPolaca(Main.polaca.desapilar());
-													Main.polaca.addElementPolaca("JD"); //CONSULTAR
-													Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());}} //se vuelve al ambito anterior
+													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
+													Main.polaca.addElementPolaca(Main.polaca.desapilar()); // Apilo el comienzo del defer
+													Main.polaca.addElementPolaca("JBD");}} //JUMP BEGIN DEFER CONSULTAR
                     |   retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf(".")); 
 									Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning: funcion vacia");
 									if (this.existeDefer){
 										this.existeDefer = false;
-										Main.polaca.addElementPolaca(Main.polaca.desapilar());
-										Main.polaca.addElementPolaca("JD"); //CONSULTAR
-										Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());}}
+										Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
+										Main.polaca.addElementPolaca(Main.polaca.desapilar()); // Apilo el comienzo del defer
+										Main.polaca.addElementPolaca("JBD");}} //JUMP BEGIN DEFER CONSULTAR
                     |   error_cuerpo_funcion
                     ;    
 
@@ -147,14 +147,26 @@ termino             :   termino '*' '(' factor ')' {Main.estructurasSintacticas.
                     |	error_termino
 					;
        
-factor       		:   CTE_INT  {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $1.sval);
-									Main.polaca.addElementPolaca($1.sval);}
-					|	CTE_DBL	 {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $1.sval);
-									Main.polaca.addElementPolaca($1.sval);}
-					|	'-' CTE_INT {verificarRango();} {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
-									 Main.polaca.addElementPolaca($$.sval);}
-					|	'-' CTE_DBL {verificarRango();}	{$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $$.sval);
-									Main.polaca.addElementPolaca($$.sval);}
+factor       		:   CTE_INT  	{Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $1.sval);
+									String cte = $1.sval;
+									Main.polaca.addElementPolaca(cte); 
+									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
+					|	CTE_DBL	 	{Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $1.sval);
+									String cte = $1.sval;
+									Main.polaca.addElementPolaca(cte);
+									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
+					|	'-' CTE_INT {actualizarRango();} {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
+									String cte = $$.sval;
+									Main.polaca.addElementPolaca(cte);
+									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
+					|	'-' CTE_DBL {actualizarRango();} {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $$.sval);
+									String cte = $$.sval;
+									Main.polaca.addElementPolaca(cte);
+									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
+									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
 					|   ID          {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + $1.sval);
 									String id = $1.sval;
 									Main.polaca.addElementPolaca(id);
@@ -221,12 +233,12 @@ ejecutable_defer	: 	DEFER 	{this.existeDefer = true;
 								Main.polaca.apilar(Main.polaca.getSize() + 2); //Se apila para marcar el inicio del defer
 								Main.polaca.apilar(Main.polaca.getSize()); //Se apila para continuar la ejecutacion y luego ir al defer
 								Main.polaca.addElementPolaca(""); 
-								Main.polaca.addElementPolaca("JDI");} //CONSULTAR
+								Main.polaca.addElementPolaca("JED");} //JUMP END DEFER CONSULTAR
 						ejecutable_comun 	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una sentencia ejecutable con defer");
 											Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 											Main.polaca.apilar(Main.polaca.getSize());
 											Main.polaca.addElementPolaca(""); 
-											Main.polaca.addElementPolaca("JDF");} //CONSULTAR
+											Main.polaca.addElementPolaca("JS");} // JUMP SCOPE CONSULTAR
 					;	
 				
 asignacion			:	ID ASSIGN expresion ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion");
@@ -566,27 +578,21 @@ public void yyerror(String s){
 }
 
 
-public void verificarRango() {
+public void actualizarRango() {
   String lexema = yylval.sval;
-  int clave = TablaSimbolos.obtenerClave(lexema);
-  int id = Integer.parseInt(TablaSimbolos.obtenerAtributo(clave, "tipo"));
-  if (id == AnalizadorLexico.CTE_INT) {
+  int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema);
+  String tipo = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "tipo");
+  if (tipo.equals(this.analizadorLexico.CTE_INT_TYPE)){ //Pasar valor desde analizador lexico
 	  int nro = 1; //SOLO SE PERMITEN NUMEROS POSITIVOS
 	  analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(nro));
       Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
       Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
   }
-  else if (id == analizadorLexico.CTE_DBL) {
-    Float flotante = -1*Float.parseFloat(lexema.replace('D', 'e'));
-    if (((flotante >= AnalizadorLexico.MINDOUBLEPOS && flotante <= AnalizadorLexico.MAXDOUBLEPOS)) || ((flotante >= AnalizadorLexico.MINDOUBLENEG) && (flotante <= AnalizadorLexico.MAXDOUBLENEG)) || (flotante == 0)) {
-    	analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(flotante));
-		Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante f64: " + flotante);
+  else if (tipo.equals(this.analizadorLexico.CTE_DBL_TYPE)) {
+	String flotante = "-" + lexema;
+    analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, flotante);
     }
-    else {
-      Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante f64 fuera de rango");
-    }
-  }
-}
+ }
 
 public void incorporarInformacionSemantica(String nombreLexema, String tipoLexema, String usoLexema, String ambitoLexema){
 	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreLexema); //se obtiene la clave

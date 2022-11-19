@@ -13,7 +13,7 @@ public class AS2 extends AccionSemantica{
         int id_palabra_reservada = TablaPalabrasReservadas.obtenerId(simbolo);
         if (id_palabra_reservada != -1) { //Es una palabra reservada
             identificador = id_palabra_reservada;
-            Main.tokensLexico.add(identificador);
+            Main.tokensLexico.add(simbolo);
             return new Token(identificador);
         } 
         else {
@@ -26,7 +26,7 @@ public class AS2 extends AccionSemantica{
         }
         if ((TablaSimbolos.obtenerClaveID(simbolo) == TablaSimbolos.NO_ENCONTRADO)) //Se agregan todos los identificadores que se encuentren distintos
             TablaSimbolos.agregarSimbolo(simbolo);
-        Main.tokensLexico.add(identificador);
+        Main.tokensLexico.add(AnalizadorLexico.IDENTIFICADOR_TYPE);
         return new Token(identificador,simbolo);
     }
 }

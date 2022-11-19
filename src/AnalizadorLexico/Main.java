@@ -10,7 +10,7 @@ import Parser.Parser;
 
 public class Main {
 	public static ManejadorArchivo manejadorArchivo = new ManejadorArchivo();
-	public static List<Integer> tokensLexico = new ArrayList<>();
+	public static List<String> tokensLexico = new ArrayList<>();
 	public static List<String> erroresLexico = new ArrayList<>();
 	public static List<String> estructurasSintacticas = new ArrayList<>();
 	public static List<String> erroresSintacticos = new ArrayList<>();

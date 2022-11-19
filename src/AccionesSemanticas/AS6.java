@@ -8,7 +8,7 @@ public class AS6 extends AccionSemantica{
     	if ((AnalizadorLexico.caracter != AnalizadorLexico.NUEVALINEA) || (AnalizadorLexico.caracter != AnalizadorLexico.BLANCO) || ((AnalizadorLexico.caracter != AnalizadorLexico.TAB)))
     		AnalizadorLexico.cursor--;
     	char caracter = buffer.charAt(0);
-		Main.tokensLexico.add((int)caracter);
+		Main.tokensLexico.add(String.valueOf(caracter));
 		return new Token((int) caracter);
     }
 }

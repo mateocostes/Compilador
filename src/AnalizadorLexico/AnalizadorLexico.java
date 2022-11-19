@@ -25,6 +25,10 @@ public class AnalizadorLexico {
     public static final int CTE_INT = 258;
     public static final int CTE_DBL = 259;
     public static final int CADENA = 260;
+	public static final String IDENTIFICADOR_TYPE = "id";
+	public static final String CTE_INT_TYPE = "ui16";
+	public static final String CTE_DBL_TYPE = "f64";
+	public static final String CADENA_TYPE = "cadena";
     
     public MatricesTransicion matricesTransicion = new MatricesTransicion();
     public TablaPalabrasReservadas tablaPalabrasReservadas = new TablaPalabrasReservadas();
