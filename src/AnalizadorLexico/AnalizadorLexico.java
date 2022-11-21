@@ -14,10 +14,10 @@ public class AnalizadorLexico {
     public static final int LONGITUDIDENTIFICADOR = 25;
     public static final long MININT = 0;
     public static final long MAXINT = (long) Math.pow(2, 16) - 1;
-    public static final double MINDOUBLEPOS = 2.2250738585072014e-308;
-    public static final double MAXDOUBLEPOS = 1.7976931348623157e+308;
-    public static final double MINDOUBLENEG = -1.7976931348623157e+308;
-    public static final double MAXDOUBLENEG = -2.2250738585072014e-308;
+    public static final double MINDOUBLEPOS = 2.2250738585072014E-308;
+    public static final double MAXDOUBLEPOS = 1.7976931348623157E+308;
+    public static final double MINDOUBLENEG = -1.7976931348623157E+308;
+    public static final double MAXDOUBLENEG = -2.2250738585072014E-308;
 	public static final char DIGITO = '0';
 	public static final char MINUSCULA = 'a';
 	public static final char MAYUSCULA = 'A';

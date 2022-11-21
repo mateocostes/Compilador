@@ -321,7 +321,7 @@ public class MatricesTransicion {
 		//Fila 11
 		matrizEstados[11][0] = 11;
 		matrizEstados[11][1] = 11;
-		matrizEstados[11][2] = 11;
+		matrizEstados[11][2] = -1;
 		matrizEstados[11][3] = 11;
 		matrizEstados[11][4] = 11;
 		matrizEstados[11][5] = 11;

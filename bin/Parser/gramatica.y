@@ -276,8 +276,12 @@ bloque_de_sent_ejecutables	:  	ejecutables
 							;
 							
 			
-mensaje_pantalla	:	OUT '(' CADENA ')'	';' {Main.polaca.addElementPolaca($3.sval);
-												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");}
+mensaje_pantalla	:	OUT '(' CADENA ')'	';' {String cadena = $3.sval;
+												Main.polaca.addElementPolaca(cadena);
+												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");
+												int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cadena); //se obtiene la clave
+												if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
+													this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "cadena");}} // se agrega el uso a la tabla de simbolos}
 					|	error_mensaje_pantalla
 					;
 					
@@ -494,6 +498,8 @@ error_mensaje_pantalla	:	'(' CADENA ')' ';' {Main.erroresSintacticos.add("[Parse
 						|	OUT '(' CADENA ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre en la sentencia de mensaje por pantalla");}
 						|	OUT '(' CADENA ')' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la sentencia de mensaje por pantalla");}
 						|	OUT	'(' ')' ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la cadena en el mensaje por pantalla");}
+						|	CADENA {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el out y los parentesis en la sentencia de mensaje por pantalla");}
+						|	CADENA ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el out, los parentesis y el punto y coma de cierre en la sentencia de mensaje por pantalla");}
 						;
 
 error_invocacion_discard	:	DISCARD error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el nombre de la funcion discard");}
@@ -595,10 +601,12 @@ public void actualizarRango() {
 			analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, flotante);
 		}
 		else {
-			analizadorLexico.tablaSimbolos.agregarSimbolo(flotante);
-            clave = analizadorLexico.tablaSimbolos.obtenerClave(flotante);
-            analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", this.analizadorLexico.CTE_DBL_TYPE);
-            Parser.agregoCteDbl = false;
+			if (this.analizadorLexico.tablaSimbolos.obtenerClave(flotante) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+				this.analizadorLexico.tablaSimbolos.agregarSimbolo(flotante);
+				clave = this.analizadorLexico.tablaSimbolos.obtenerClave(flotante);
+				this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", this.analizadorLexico.CTE_DBL_TYPE);
+			}
+			Parser.agregoCteDbl = false;
 		}
 	}
 }
