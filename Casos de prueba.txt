@@ -6,10 +6,11 @@ prueba_nombre_programa {
 
 prueba_nombre_programa {
 	if (a > c) then{
-		precio =: flete + costo * (1.5);
+		precio =: flete + costo * 1.5;
 	} 
-	else {costo =: flete }
-	end_if;
+	else {
+		costo =: flete;
+	}end_if;
 }
 
 prueba_nombre_programa {
@@ -214,4 +215,61 @@ prueba_lexico_flotantes{
 	var_dbl2 =: 2.;
 	var_dbl3 =: 1.;
 	var_dbl4 =: -2.;
+}
+
+prueba_lexico_cad{	
+	ui16 hola;
+	out ('hola');
+	out ('hola');
+	out ('hola2');
+}
+
+prueba_nombre_programa {
+	ui16 a, b, c, d, var1,var2;
+	f64 x, y, z;
+	var1 =: 4;
+	var2 =: a + b * c  - d / 4;
+	z =: tof64(var2) + x;
+	y =: x * tof64(a);
+}
+
+prueba_nombre_programa {
+	ui16 var1,var2;
+	var1 =: 4;
+	var2 =: 4;
+	if (var1 = var2) then{
+		var1 =: 4;
+	} end_if;
+	if (var1 = var2) then{
+		var1 =: 4;}
+	else{
+	    var1 =: 5;
+		out ('por else');
+	}end_if;
+} 
+
+prueba_nombre_programa {
+	ui16 var1, var2, var3;
+	do { 
+		var3 =: 1;
+		if (var3 > 2) then{
+		  out ('mayor');
+		}end_if;
+	}
+	until (var1 = var2) : (var3 =: 1;);
+}
+
+prueba_nombre_programa {
+	ui16 var1, var2, var3;
+	fun funcion1(ui16 a, ui16 b) : ui16 {
+		a =: a - b;
+		return (a);
+	};
+	do { 
+		var3 =: funcion1(var3,var3);
+		if (var3 > 2) then{
+		  out ('mayor');
+		}end_if;
+	}
+	until (var1 = var2) : (var3 =: funcion1(var3,var3));
 }
