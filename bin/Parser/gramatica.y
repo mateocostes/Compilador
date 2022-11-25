@@ -205,6 +205,7 @@ parametro_real				:	ID  {Main.estructurasSintacticas.add("[Parser: linea " + thi
 									String id = $1.sval;
 									Main.polaca.addElementPolaca(id);
 									this.cantidad_parametros_reales++;
+									System.out.println("PR: " + this.cantidad_parametros_reales);
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 							|	CTE_INT {Main.polaca.addElementPolaca($1.sval);}
@@ -278,7 +279,7 @@ bloque_de_sent_ejecutables	:  	ejecutables
 							
 			
 mensaje_pantalla	:	OUT '(' CADENA ')'	';' {String cadena = $3.sval;
-												Main.polaca.addElementPolaca(cadena);
+												Main.polaca.addElementPolaca("OUT." + cadena);
 												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");
 												int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cadena); //se obtiene la clave
 												if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
@@ -286,10 +287,18 @@ mensaje_pantalla	:	OUT '(' CADENA ')'	';' {String cadena = $3.sval;
 					|	error_mensaje_pantalla
 					;
 					
-invocacion_discard	: 	DISCARD ID {String id = $2.sval;
-									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
-										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
-						parametros_discard
+invocacion_discard	: 	DISCARD ID parametros_discard	{String id = $2.sval;
+														Main.polaca.addElementPolaca(id);
+														int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); //se obtiene la clave
+														if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
+														}
+														else{
+														System.out.println("PR2: " + this.cantidad_parametros_reales);
+														if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
+															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
+														}
+														this.cantidad_parametros_reales = 0;}
 					|	error_invocacion_discard
 					;
 					
