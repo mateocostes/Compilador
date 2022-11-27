@@ -43,9 +43,11 @@ declarativa        	:	funcion ';'
 					|   tipo lista_de_variables ';' { Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de variables");
 													String tipoVar = $1.sval;
 													lista_de_variables = (ArrayList<String>)$2.obj;
-													for(String lexema : lista_de_variables) // por cada variable declarada
-														incorporarInformacionSemantica(lexema, tipoVar, "variable", ambito);
-													lista_de_variables.clear();}
+													if(lista_de_variables!=null){
+														for(String lexema : lista_de_variables) // por cada variable declarada
+															incorporarInformacionSemantica(lexema, tipoVar, "variable", ambito);
+														lista_de_variables.clear();
+													}}
 													
                     |   error_declarativa
                     ;
@@ -107,7 +109,7 @@ cuerpo_funcion      :   sentencias retorno '}' {this.ambito = this.ambito.substr
 													Main.polaca.addElementPolaca(Main.polaca.desapilar()); // Apilo el comienzo del defer
 													Main.polaca.addElementPolaca("JBD");}} //JUMP BEGIN DEFER CONSULTAR
                     |   retorno '}' {this.ambito = this.ambito.substring(0,ambito.lastIndexOf(".")); 
-									Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning: funcion vacia");
+									Main.warnings.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning: funcion vacia");
 									if (this.existeDefer){
 										this.existeDefer = false;
 										Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
@@ -156,12 +158,14 @@ factor       		:   CTE_INT  	{Main.estructurasSintacticas.add("[Lexico: linea " 
 									Main.polaca.addElementPolaca(cte);
 									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
 									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
-					|	'-' CTE_INT {actualizarRango();} {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
+					|	'-' CTE_INT {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
+									actualizarRango();
 									String cte = $$.sval;
 									Main.polaca.addElementPolaca(cte);
 									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
 									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
-					|	'-' CTE_DBL {actualizarRango();} {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $$.sval);
+					|	'-' CTE_DBL {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $$.sval);
+									actualizarRango();
 									String cte = $$.sval;
 									Main.polaca.addElementPolaca(cte);
 									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
@@ -186,7 +190,7 @@ invocacion			: 	ID '(' lista_parametros_reales ')'	{String id = $1.sval;
 															}
 															else{
 																if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
-																	Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
+																	Main.warnings.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
 															}
 															this.cantidad_parametros_reales = 0;}
 					|	error_invocacion
@@ -296,7 +300,7 @@ invocacion_discard	: 	DISCARD ID parametros_discard	{String id = $2.sval;
 														else{
 														System.out.println("PR2: " + this.cantidad_parametros_reales);
 														if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
-															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
+															Main.warnings.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
 														}
 														this.cantidad_parametros_reales = 0;}
 					|	error_invocacion_discard
@@ -409,6 +413,7 @@ error_declarativa	:	tipo lista_de_variables {Main.erroresSintacticos.add("[Parse
 					|	lista_de_variables ';'  {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el tipo de las variables");}
 					|	error tipo ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta/n la/s variable/s");}
 					|	funcion {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta ; al terminar la declaracion de la funcion");}
+					|	tipo ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el identificador de la variable en la declaracion");}
 					;
 
 
@@ -625,10 +630,10 @@ public void actualizarRango() {
 	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema);
 	String tipo = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "tipo");
 	if (tipo.equals(this.analizadorLexico.CTE_INT_TYPE)){ //Pasar valor desde analizador lexico
-	  int nro = 1; //SOLO SE PERMITEN NUMEROS POSITIVOS
-	  analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(nro));
-	  Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
-	  Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
+		int nro = Integer.parseInt(lexema); //SOLO SE PERMITEN NUMEROS POSITIVOS
+		analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(nro));
+		Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
+		Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
 	}
 	else if (tipo.equals(this.analizadorLexico.CTE_DBL_TYPE)) {
 		String flotante = "-" + lexema;

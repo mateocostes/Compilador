@@ -14,6 +14,7 @@ public class Main {
 	public static List<String> erroresLexico = new ArrayList<>();
 	public static List<String> estructurasSintacticas = new ArrayList<>();
 	public static List<String> erroresSintacticos = new ArrayList<>();
+	public static List<String> warnings = new ArrayList<>();
 	public static Polaca polaca = new Polaca();
 	
 	public static void main(String[] args) throws Exception{
@@ -33,11 +34,11 @@ public class Main {
 			String direccion = file.getPath();*/
 			String direccion = "";
 			//Direccion Mateo PC
-			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
+			//direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 			//Direccion Mateo Notebook
 			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
 			//Direccion Franco
-			//direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
+			direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
 			AnalizadorLexico analizadorLexico = new AnalizadorLexico(Codigo);
 	        Parser p = new Parser(analizadorLexico);
@@ -60,6 +61,11 @@ public class Main {
 			System.out.println("erroresSintacticos");
 	        for (int i=0; i<erroresSintacticos.size();i++) 
 	        	System.out.println(erroresSintacticos.get(i));
+			
+			System.out.println();
+			System.out.println("warnings");
+			for (int i=0; i<warnings.size();i++) 
+				System.out.println(warnings.get(i));
 	        
 	        analizadorLexico.tablaSimbolos.imprimirTabla();
 	        polaca.imprimirLista();
