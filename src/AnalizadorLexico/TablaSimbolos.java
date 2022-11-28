@@ -2,6 +2,8 @@ package AnalizadorLexico;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+
 import Parser.Parser;
 
 public class TablaSimbolos {
@@ -113,6 +115,10 @@ public class TablaSimbolos {
                 return true;
         } 
         return false;
+    }
+
+    public static Set<Integer> obtenerConjuntoPunteros() {
+        return simbolos.keySet();
     }
 
 }

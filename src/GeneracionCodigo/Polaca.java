@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 public class Polaca {
-	private ArrayList<Object> polaca;
+	public static ArrayList<Object> polaca;
 	public static Stack<Integer> pila = new Stack<Integer>();
 	private boolean existeBreak = false;
 	
