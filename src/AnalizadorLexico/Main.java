@@ -16,6 +16,7 @@ public class Main {
 	public static List<String> erroresSintacticos = new ArrayList<>();
 	public static List<String> warnings = new ArrayList<>();
 	public static Polaca polaca = new Polaca();
+	public static Assembler assembler = new Assembler();
 	
 	public static void main(String[] args) throws Exception{
 		/*//Ventana para seleccionar archivo
@@ -34,11 +35,11 @@ public class Main {
 			String direccion = file.getPath();*/
 			String direccion = "";
 			//Direccion Mateo PC
-			//direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
+			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 			//Direccion Mateo Notebook
 			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
 			//Direccion Franco
-			direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
+			//direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
 			AnalizadorLexico analizadorLexico = new AnalizadorLexico(Codigo);
 	        Parser p = new Parser(analizadorLexico);
@@ -69,6 +70,10 @@ public class Main {
 	        
 	        analizadorLexico.tablaSimbolos.imprimirTabla();
 	        polaca.imprimirLista();
+
+			System.out.println();
+			Assembler.generarCodigo();
+			System.out.println("Assembler: " + Assembler.codigo);
 		//}       
 	}
  }

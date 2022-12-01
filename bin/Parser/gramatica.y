@@ -159,17 +159,9 @@ factor       		:   CTE_INT  	{Main.estructurasSintacticas.add("[Lexico: linea " 
 									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
 									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
 					|	'-' CTE_INT {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
-									actualizarRango();
-									String cte = $$.sval;
-									Main.polaca.addElementPolaca(cte);
-									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
+									actualizarRango();}
 					|	'-' CTE_DBL {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $$.sval);
-									actualizarRango();
-									String cte = $$.sval;
-									Main.polaca.addElementPolaca(cte);
-									int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
-									this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
+									actualizarRango();}
 					|   ID          {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + $1.sval);
 									String id = $1.sval;
 									Main.polaca.addElementPolaca(id);
@@ -181,8 +173,10 @@ factor       		:   CTE_INT  	{Main.estructurasSintacticas.add("[Lexico: linea " 
 					|	error_factor
 					;
 					
+
 invocacion			: 	ID '(' lista_parametros_reales ')'	{String id = $1.sval;
 															Main.polaca.addElementPolaca(id);
+															Main.polaca.addElementPolaca("#CALL");
 															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una invocacion a funcion");
 															int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); //se obtiene la clave
 															if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
@@ -209,11 +203,22 @@ parametro_real				:	ID  {Main.estructurasSintacticas.add("[Parser: linea " + thi
 									String id = $1.sval;
 									Main.polaca.addElementPolaca(id);
 									this.cantidad_parametros_reales++;
-									System.out.println("PR: " + this.cantidad_parametros_reales);
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
-							|	CTE_INT {Main.polaca.addElementPolaca($1.sval);}
-							|	CTE_DBL {Main.polaca.addElementPolaca($1.sval);}
+							|	CTE_INT {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $1.sval);
+										String cte = $1.sval;
+										Main.polaca.addElementPolaca(cte);
+										this.cantidad_parametros_reales++;}
+							|	CTE_DBL {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $1.sval);
+										String cte = $1.sval;
+										Main.polaca.addElementPolaca(cte);
+										this.cantidad_parametros_reales++;}
+							|	'-' CTE_INT {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
+											this.cantidad_parametros_reales++;
+											actualizarRango();}
+							|	'-' CTE_DBL {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante doble: " + $$.sval);
+											this.cantidad_parametros_reales++;
+											actualizarRango();}
 							;
 
 comparador          :   MENOR_IGUAL {$$ = new ParserVal("<=");}
@@ -264,16 +269,19 @@ seleccion			:	IF condicion {Main.polaca.apilar(Main.polaca.getSize());
 					;
 					
 cuerpo_seleccion	: 	THEN '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());
+																			Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
 																			Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un IF");}
 					| 	THEN '{' bloque_de_sent_ejecutables '}' {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 																Main.polaca.apilar(Main.polaca.getSize());
 																Main.polaca.addElementPolaca("");
-																Main.polaca.addElementPolaca("BI");}
+																Main.polaca.addElementPolaca("BI");
+																Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));}
 						cuerpo_else
 					|	error_cuerpo_seleccion
 					;
 
 cuerpo_else	:	ELSE '{' bloque_de_sent_ejecutables '}' END_IF ';' {Main.polaca.replaceElementIndex(Main.polaca.getSize(), Main.polaca.desapilar());
+																	Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
 																	Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un IF-ELSE");}
 			|	error_cuerpo_else
 			;
@@ -283,7 +291,8 @@ bloque_de_sent_ejecutables	:  	ejecutables
 							
 			
 mensaje_pantalla	:	OUT '(' CADENA ')'	';' {String cadena = $3.sval;
-												Main.polaca.addElementPolaca("OUT." + cadena);
+												Main.polaca.addElementPolaca(cadena);
+												Main.polaca.addElementPolaca("#OUT");
 												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");
 												int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cadena); //se obtiene la clave
 												if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
@@ -298,7 +307,6 @@ invocacion_discard	: 	DISCARD ID parametros_discard	{String id = $2.sval;
 															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
 														}
 														else{
-														System.out.println("PR2: " + this.cantidad_parametros_reales);
 														if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
 															Main.warnings.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
 														}
@@ -310,8 +318,10 @@ parametros_discard	:	'(' lista_parametros_reales ')' ';' {Main.estructurasSintac
 					|	error_parametros_discard
 					;
 					
-expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());} cuerpo_dountil
-					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());
+expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());
+						Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));} cuerpo_dountil
+					|	etiqueta ':' DO {Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
+										Main.polaca.apilar(Main.polaca.getSize());
 										String nombre_etiqueta = $1.sval;
 										incorporarInformacionSemantica(nombre_etiqueta, "", "etiqueta", this.ambito);}
 						cuerpo_dountil_etiqueta
@@ -323,24 +333,26 @@ etiqueta			: 	ID
 
 cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																				Main.polaca.addElementPolaca("");
-																				Main.polaca.addElementPolaca("BI");}
+																				Main.polaca.addElementPolaca("BF");}
 						cuerpo_asignacion_do_until 	{Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 												if (Main.polaca.existeBreak()){ //Hay un Break
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 												Main.polaca.addElementPolaca(Main.polaca.desapilar());
-												Main.polaca.addElementPolaca("BF");
+												Main.polaca.addElementPolaca("BI");
+												Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
 												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until");}
 					|	error_cuerpo_dountil
 					;
 
 cuerpo_dountil_etiqueta	:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																								Main.polaca.addElementPolaca("");
-																								Main.polaca.addElementPolaca("BI");}
+																								Main.polaca.addElementPolaca("BF");}
 							cuerpo_asignacion_do_until {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 												if (Main.polaca.existeBreak()){ //Hay un Break
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 												Main.polaca.addElementPolaca(Main.polaca.desapilar());
-												Main.polaca.addElementPolaca("BF");
+												Main.polaca.addElementPolaca("BI");
+												Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
 												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un do-until con etiqueta");}
 						|	error_cuerpo_dountil_etiqueta
 						;
@@ -483,7 +495,8 @@ error_termino	:	'*' factor {Main.erroresSintacticos.add("[Parser: linea " + this
 error_factor	:	TOF64 error expresion')' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de apertura de la expresion en la conversion tof64");}
 				|	TOF64 '(' expresion error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre de la expresion en la conversion tof64");}
 				|	TOF64 '(' ')' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, faltan los parentesis de la expresion en la conversion tof64");}
-
+				;
+				
 error_invocacion	:	ID '(' lista_parametros_reales error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre en los parametros de la funcion invocada");}
 					;
 
@@ -603,6 +616,7 @@ public static String nombre_funcion;
 public static String ambito;
 public static boolean existeDefer = false;
 public static boolean agregoCteDbl = false;
+public static String nombre_funcion_invocacion = "";
 
 public Parser(AnalizadorLexico analizadorLexico)
 {
@@ -632,6 +646,7 @@ public void actualizarRango() {
 	if (tipo.equals(this.analizadorLexico.CTE_INT_TYPE)){ //Pasar valor desde analizador lexico
 		int nro = Integer.parseInt(lexema); //SOLO SE PERMITEN NUMEROS POSITIVOS
 		analizadorLexico.tablaSimbolos.actulizarSimbolo(clave, String.valueOf(nro));
+		Main.polaca.addElementPolaca(nro);
 		Main.estructurasSintacticas.add("[Parser: linea " + analizadorLexico.linea + "]. Se actualiza la constante i16 al valor: " + nro);
 		Main.erroresSintacticos.add("[Parser: linea " + analizadorLexico.linea + "]. Error sintactico: constante i16 fuera de rango");
 	}
@@ -648,7 +663,9 @@ public void actualizarRango() {
 			}
 			Parser.agregoCteDbl = false;
 		}
+		Main.polaca.addElementPolaca(flotante);
 	}
+	this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");
 }
 
 public void incorporarInformacionSemantica(String nombreLexema, String tipoLexema, String usoLexema, String ambitoLexema){

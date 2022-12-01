@@ -3,27 +3,26 @@ package GeneracionCodigo;
 import AnalizadorLexico.*;
 
 public class TablaTipos {
-    public static final int UINT = 0;
-    public static final int DOUBLE = 1;
+    public static final int UI16 = 0;
+    public static final int F64 = 1;
     public static final int FUNC = 2;
 
-    public static final String DOUBLE_TYPE = "double";
-    public static final String UINT_TYPE = "uint";
+    public static final String F64_TYPE = "f64";
+    public static final String UI16_TYPE = "ui16";
     public static final String FUNC_TYPE = "funcion";
-    //public static final String STR_TYPE = "string";
     public static final String ERROR_TYPE = "error";
 
-    private static final String[][] tiposSumaResta = { { UINT_TYPE, DOUBLE_TYPE, ERROR_TYPE },
-                                                       { DOUBLE_TYPE, DOUBLE_TYPE, ERROR_TYPE },
+    private static final String[][] tiposSumaResta = { { UI16_TYPE, ERROR_TYPE, ERROR_TYPE },
+                                                       { ERROR_TYPE, F64_TYPE, ERROR_TYPE },
                                                        { ERROR_TYPE, ERROR_TYPE, ERROR_TYPE} };
-    private static final String[][] tiposMultDiv = { { UINT_TYPE, DOUBLE_TYPE, ERROR_TYPE },
-                                                     { DOUBLE_TYPE, DOUBLE_TYPE, ERROR_TYPE },
+    private static final String[][] tiposMultDiv = { { UI16_TYPE, ERROR_TYPE, ERROR_TYPE },
+                                                     { ERROR_TYPE, F64_TYPE, ERROR_TYPE },
                                                      { ERROR_TYPE, ERROR_TYPE, ERROR_TYPE} };
-    private static final String[][] tiposComparadores = { { UINT_TYPE, DOUBLE_TYPE, ERROR_TYPE }, 
-                                                          { DOUBLE_TYPE, DOUBLE_TYPE, ERROR_TYPE },
+    private static final String[][] tiposComparadores = { { UI16_TYPE, ERROR_TYPE, ERROR_TYPE }, 
+                                                          { ERROR_TYPE, F64_TYPE, ERROR_TYPE },
                                                           { ERROR_TYPE, ERROR_TYPE, ERROR_TYPE } };
-    private static final String[][] tiposAsig = { { UINT_TYPE, ERROR_TYPE, ERROR_TYPE }, 
-                                                  { DOUBLE_TYPE, DOUBLE_TYPE, ERROR_TYPE },
+    private static final String[][] tiposAsig = { { UI16_TYPE, ERROR_TYPE, ERROR_TYPE }, 
+                                                  { ERROR_TYPE, F64_TYPE, ERROR_TYPE },
                                                   { ERROR_TYPE, ERROR_TYPE, FUNC_TYPE } };
 
     public static String getTipoAbarcativo(String op1, String op2, String operador){
@@ -41,8 +40,14 @@ public class TablaTipos {
     }
 
     public static String getTipo(String op) {
-        int puntOp = TablaSimbolos.obtenerClave(op);
-
+        int puntOp;
+        char caracter = op.charAt(0); //Obtengo el primer caracter del operando para saber si es una variable o una constante
+        if (Character.isDigit(caracter) || (caracter == '-')) { //Es una constante
+            puntOp = TablaSimbolos.obtenerClave(op);
+        }
+        else{
+            puntOp = TablaSimbolos.obtenerClaveID(op);
+        }
         String tipo = TablaSimbolos.obtenerAtributo(puntOp, "tipo");
 
         if (tipo == FUNC_TYPE) {
@@ -70,16 +75,14 @@ public class TablaTipos {
             case ("*"):
             case ("/"):
                 return tiposMultDiv[fil][col];
-            case (":="):
+            case ("=:"):
                 return tiposAsig[fil][col];
             case ("<="):
             case ("<"):
             case (">="):
             case (">"):
-            case ("<>"):
-            case ("=="):
-            case ("||"):
-            case ("&&"):
+            case ("=!"):
+            case ("="):
                 return tiposComparadores[fil][col];
             default:
                 return ERROR_TYPE;
@@ -87,8 +90,8 @@ public class TablaTipos {
     }
 
     private static int getNumeroTipo(String tipo) {
-        if (tipo.equals(UINT_TYPE)) return UINT;
-        else if (tipo.equals(DOUBLE_TYPE)) return DOUBLE;
+        if (tipo.equals(UI16_TYPE)) return UI16;
+        else if (tipo.equals(F64_TYPE)) return F64;
         else return FUNC;
     }
 }

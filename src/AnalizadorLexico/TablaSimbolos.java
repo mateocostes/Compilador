@@ -32,7 +32,7 @@ public class TablaSimbolos {
                 return entrada.getKey();
             }
         }
-        return NO_ENCONTRADO; //No encontrado
+        return NO_ENCONTRADO;
     }
 
     public static int obtenerClave(String lexema) {
