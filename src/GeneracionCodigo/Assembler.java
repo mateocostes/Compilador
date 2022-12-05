@@ -15,6 +15,8 @@ public class Assembler {
 
     public static String ultimaFuncionLlamada;
 
+    public static ArrayList<Object> codigoDefer = new ArrayList<Object>();
+
     private static final String AUX_CONTRATO = "@contrato";
     private static String nombreAux2bytes = "@aux2bytes"; 
 
@@ -24,8 +26,8 @@ public class Assembler {
     
     public static void generarCodigo() {
         //funcion principal que genera el codigo del programa, utilizando los tokes de la pocala y simbolos de la respectiva tabla
-        for (Object elemPolaca : Polaca.polaca) {
-            String token = String.valueOf(elemPolaca);
+        for (int indice = 0; indice < Polaca.polaca.size(); indice++){
+            String token = String.valueOf(Polaca.polaca.get(indice));
             switch (token) {
                 case "*":
                 case "+":
@@ -40,10 +42,10 @@ public class Assembler {
                 case "=":
                     generarOperador(token);
                     break;
-                case "BI":
+                case "#BI":
                     generarSalto("JMP");
                     break;
-                case "BF":
+                case "#BF":
                     generarSalto(ultimaComparacion);
                     break;
                 case "#BT":
@@ -52,27 +54,29 @@ public class Assembler {
                 case "#CALL":
                     generarLlamadoFuncion();
                     break;
-                case "#CATCH":
-                    generarCodigoCatch();
-                    break;
-                case "#END_TRY":
-                    generarCodigoEndTry();
-                    break;
-                case "\\RET":
+                case "#RET":
                     generarCodigoRetorno();
-                    break;
-                case "\\ENDP":
-                    generarCodigoFinalFuncion(token);
                     break;
                 case "#OUT":
                     String cadena = pila_tokens.pop(); 
                     codigo.append("invoke MessageBox, NULL, addr ").append(cadena).append(", addr ").append(cadena).append(", MB_OK \n");
+                    break;
+                case "#FUN":
+                    generarCabeceraFuncion();
+                    break;
+                case "#DEFER":
+                    generarCodigoDefer(indice);
+                    indice--;
+                    break;
+                case "#EJECDEFER":
+                    generarCodigoEjecucionDefer(indice);
+                    indice--;
+                    break;
                 default:
                     if (token.startsWith(":")) {   //entramos un label
                         codigo.append(token.substring(1)).append(":\n");
-                    } /*else if (token.startsWith("!")) {   // Encontramos el comienzo de una funcion
-                        generarCabeceraFuncion(token);
-                    } */else {
+                    } 
+                    else {
                         pila_tokens.push(token);
                     }
                     break;
@@ -172,26 +176,8 @@ public class Assembler {
         }
     }
 
-    private static void generarCabeceraFuncion(String token) {
-        codigo.append(token.substring(1)).append(" PROC\n");
-        // codigo.append("MOV EAX, ").append(token.substring(1)).append("\n");
-        // codigo.append("MOV @FUNCION_ACTUAL, EAX\n"); // en la variable @FUNCION_ACTUAL guardamos el nombre de la funcion actual
-    }
-
-    private static void generarCodigoFinalFuncion(String token) {
-        String nombre_funcion = pila_tokens.pop();
-        codigo.append(nombre_funcion).append(" ").append(token.substring(1)).append("\n");
-    }
-
-    private static void generarCodigoCatch() {
-        codigo.append("MOV ECX, ").append(AUX_CONTRATO).append("\n");
-        codigo.append("CMP ECX, 0FFh\n");
-        ultimaComparacion = "JNE";
-    }
-
-    private static void generarCodigoEndTry() {
-        codigo.append("MOV ECX, ").append(AUX_CONTRATO).append("\n");
-        codigo.append("MOV ").append(AUX_CONTRATO).append(", 0FFh\n");
+    private static void generarCabeceraFuncion() {
+        codigo.append(pila_tokens.pop()).append(":").append("\n");
     }
 
     public static void generarOperador(String operador) {
@@ -561,36 +547,32 @@ public class Assembler {
         String funcion = pila_tokens.pop();
         int clave_funcion = TablaSimbolos.obtenerClaveID(funcion);
         int cant_parametros_funcion = Integer.parseInt(TablaSimbolos.obtenerAtributo(clave_funcion, "cantidad de parametros"));
-        ArrayList<String> parametros = new ArrayList<String>();
-        for (int i = 0; i < cant_parametros_funcion; i++)
+        switch (cant_parametros_funcion){
+            case 0:
+                //La funcion no tiene parametros
+                break;
+            case 1: 
+                //String parametro_real = pila_tokens.pop();
+                String parametro_formal = TablaSimbolos.obtenerAtributo(clave_funcion, "parametro_1");
+                pila_tokens.push(parametro_formal);
+                generarOperador("=:");
+                break;
 
-        String parametro = pila_tokens.pop();
-        String funcion_actual = pila_tokens.pop();  //guardamos la funcion en ejeucucon actual.
-
-        int punt_funcion = TablaSimbolos.obtenerClave(funcion);
-        //int punt_parametro = TablaSimbolos.obtenerParametro(funcion);
-        String tipo_retorno = TablaSimbolos.obtenerAtributo(punt_funcion, "retorno");
-        String uso_funcion = TablaSimbolos.obtenerAtributo(punt_funcion, "uso");
-        //String lexema_parametro = TablaSimbolos.obtenerAtributo(punt_parametro, "lexema");
-
-        // Si la funcion actual tiene un @, quiere decir que estamos fuera del MAIN
-        if (funcion_actual.contains("@"))
-            generarErrorInvocacion(funcion, funcion_actual);
-
-        pila_tokens.push(parametro);
-        //pila_tokens.push(lexema_parametro);
-        generarOperador(":=");
-
-        parametro = renombre(parametro);
-        
-        if (uso_funcion.equals("variable")) {
-            codigo.append("CALL [_").append(funcion).append("]\n");   //es un puntero a funcion
-            String nombreFuncion = TablaSimbolos.obtenerAtributo(punt_funcion, "funcion_asignada");
-            pila_tokens.push("@ret@" + nombreFuncion);
-        } else {
-            codigo.append("CALL ").append(funcion).append("\n");    //es una funcion normal
-            pila_tokens.push("@ret@" + funcion); //pusheo el retorno de la funcion
+            case 2:
+                    String parametro_real_2 = pila_tokens.pop(); //Se ordenan de acuerdo al orden original
+                    String parametro_real_1 = pila_tokens.pop();
+                    String parametro_formal_1 = TablaSimbolos.obtenerAtributo(clave_funcion, "parametro_1");
+                    String parametro_formal_2 = TablaSimbolos.obtenerAtributo(clave_funcion, "parametro_2");
+                    pila_tokens.push(parametro_real_1);
+                    pila_tokens.push(parametro_formal_1);
+                    generarOperador(":=");
+                    pila_tokens.push(parametro_real_2);
+                    pila_tokens.push(parametro_formal_2);
+                    generarOperador(":=");
+                    break;
         }
+        codigo.append("CALL ").append(funcion).append("\n");
+        pila_tokens.push(funcion); //pusheo el retorno de la funcion
     }
 
     private static String renombre(String token) {
@@ -629,7 +611,30 @@ public class Assembler {
     }
 
     private static void generarCodigoRetorno() {
-        generarOperador(":=");
+        //generarOperador(":=");
         codigo.append("RET\n");
     } 
+
+    private static void generarCodigoDefer(int indice){ //Se crea una lista nueva para generar assembler con las funciones
+        Polaca.polaca.remove(indice); //Se remueve la marca #DEFER
+        while(!(Polaca.polaca.get(indice).equals("#FINDEFER"))){
+            codigoDefer.add(Polaca.polaca.get(indice));
+            Polaca.polaca.remove(indice);
+        }
+        codigoDefer.add("#FINDEFER");
+        Polaca.polaca.remove(indice);
+        System.out.println("Polaca1: " + Polaca.polaca);
+        System.out.println("codigoDefer1: " + codigoDefer);
+    }
+
+    private static void generarCodigoEjecucionDefer(int indice){
+        while(!(codigoDefer.get(0).equals("#FINDEFER"))){
+            Polaca.polaca.add(indice++, codigoDefer.get(0));
+            codigoDefer.remove(0);
+        }
+        codigoDefer.remove(0); //Se remueve #FINDEFER
+        Polaca.polaca.remove(indice); //Se remueve #EJECDEFER
+        System.out.println("Polaca2: " + Polaca.polaca);
+        System.out.println("codigoDefer2: " + codigoDefer);
+    }
 }
