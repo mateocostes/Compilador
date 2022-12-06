@@ -74,7 +74,7 @@ funcion         	:	FUN ID {this.nombre_funcion = $2.sval;
 funcion_parametros	:	'(' lista_parametros ')' ':' tipo '{'  	{Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion");
 																String nombreFunc = this.nombre_funcion;
 																String tipoFunc = $2.sval;
-																incorporarInformacionSemantica(nombreFunc, tipoFunc, "nombre de funcion", ambito);
+																incorporarInformacionSemantica(nombreFunc, tipoFunc, "funcion", ambito);
 																int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc + "." + ambito); //se obtiene la clave
 																if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
 																	this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "cantidad de parametros", Integer.toString(this.cantidad_parametros)); // se agrega la cantidad de parametros a la tabla de simbolos
@@ -167,7 +167,7 @@ factor       		:   CTE_INT  	{Main.estructurasSintacticas.add("[Lexico: linea " 
 									actualizarRango();}
 					|   ID          {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + $1.sval);
 									String id = $1.sval;
-									Main.polaca.addElementPolaca(id);
+									Main.polaca.addElementPolaca(id + "." + this.ambito);
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 									
@@ -251,7 +251,7 @@ ejecutable_defer	: 	DEFER 	{this.existeDefer = true;
 				
 asignacion			:	ID ASSIGN expresion ';' {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion");
 												String id = $1.sval;
-												Main.polaca.addElementPolaca(id);
+												Main.polaca.addElementPolaca(id + "." + this.ambito);
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");} 
@@ -293,12 +293,12 @@ mensaje_pantalla	:	OUT '(' CADENA ')'	';' {String cadena = $3.sval;
 												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");
 												int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cadena); //se obtiene la clave
 												if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
-													this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "cadena");}} // se agrega el uso a la tabla de simbolos}
+													this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", "cadena");}} // se agrega el uso a la tabla de simbolos}
 					|	error_mensaje_pantalla
 					;
 					
 invocacion_discard	: 	DISCARD ID parametros_discard	{String id = $2.sval;
-														Main.polaca.addElementPolaca(id);
+														Main.polaca.addElementPolaca(id + "." + this.ambito);
 														int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); //se obtiene la clave
 														if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
 															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
@@ -361,7 +361,7 @@ cuerpo_asignacion_do_until 	:	':' '(' asignacion_do_until ')' ';'
 					
 asignacion_do_until			:	ID ASSIGN expresion {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion en la sentencia do-until");
 												String id = $1.sval;
-												Main.polaca.addElementPolaca(id);
+												Main.polaca.addElementPolaca(id + "." + this.ambito);
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");} 

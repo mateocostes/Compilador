@@ -1313,7 +1313,7 @@ case 23:
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una declaracion de una funcion");
 																String nombreFunc = this.nombre_funcion;
 																String tipoFunc = val_peek(4).sval;
-																incorporarInformacionSemantica(nombreFunc, tipoFunc, "nombre de funcion", ambito);
+																incorporarInformacionSemantica(nombreFunc, tipoFunc, "funcion", ambito);
 																int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc + "." + ambito); /*se obtiene la clave*/
 																if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ /* si esta declarada*/
 																	this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "cantidad de parametros", Integer.toString(this.cantidad_parametros)); /* se agrega la cantidad de parametros a la tabla de simbolos*/
@@ -1410,7 +1410,7 @@ case 55:
 //#line 168 "gramatica.y"
 {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + val_peek(0).sval);
 									String id = val_peek(0).sval;
-									Main.polaca.addElementPolaca(id);
+									Main.polaca.addElementPolaca(id + "." + this.ambito);
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
@@ -1503,7 +1503,7 @@ case 86:
 //#line 252 "gramatica.y"
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion");
 												String id = val_peek(3).sval;
-												Main.polaca.addElementPolaca(id);
+												Main.polaca.addElementPolaca(id + "." + this.ambito);
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
@@ -1542,12 +1542,12 @@ case 98:
 												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un mensaje por pantalla");
 												int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cadena); /*se obtiene la clave*/
 												if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ /* si esta declarada*/
-													this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "cadena");}}
+													this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "tipo", "cadena");}}
 break;
 case 100:
 //#line 300 "gramatica.y"
 {String id = val_peek(1).sval;
-														Main.polaca.addElementPolaca(id);
+														Main.polaca.addElementPolaca(id + "." + this.ambito);
 														int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); /*se obtiene la clave*/
 														if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
 															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
@@ -1610,7 +1610,7 @@ case 118:
 //#line 362 "gramatica.y"
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion en la sentencia do-until");
 												String id = val_peek(2).sval;
-												Main.polaca.addElementPolaca(id);
+												Main.polaca.addElementPolaca(id + "." + this.ambito);
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}

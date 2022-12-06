@@ -15,7 +15,10 @@ public class Assembler {
 
     public static String ultimaFuncionLlamada;
 
+    public static int pos_start;
+
     public static ArrayList<Object> codigoDefer = new ArrayList<Object>();
+    public static ArrayList<Object> funciones = new ArrayList<Object>();
 
     private static final String AUX_CONTRATO = "@contrato";
     private static String nombreAux2bytes = "@aux2bytes"; 
@@ -25,8 +28,11 @@ public class Assembler {
     private static final String ERROR_INVOCACION = "ERROR: Invocacion de funcion a si misma no permitida";
     
     public static void generarCodigo() {
+        RestructurarPolacaFunciones();
         //funcion principal que genera el codigo del programa, utilizando los tokes de la pocala y simbolos de la respectiva tabla
         for (int indice = 0; indice < Polaca.polaca.size(); indice++){
+            if (indice == pos_start)
+                codigo.append("start:\n");
             String token = String.valueOf(Polaca.polaca.get(indice));
             switch (token) {
                 case "*":
@@ -58,7 +64,7 @@ public class Assembler {
                     generarCodigoRetorno();
                     break;
                 case "#OUT":
-                    String cadena = pila_tokens.pop(); 
+                    String cadena = pila_tokens.pop().replace(' ', '@');
                     codigo.append("invoke MessageBox, NULL, addr ").append(cadena).append(", addr ").append(cadena).append(", MB_OK \n");
                     break;
                 case "#FUN":
@@ -81,14 +87,12 @@ public class Assembler {
                     }
                     break;
             }
-
-            ++posicionActualPolaca;
             //Impresion por pantalla para debuggear el codigo
             //System.out.println("Se leyo el token: " + token + ", la pila actual es: " + pila_tokens);
         }
 
         codigo.append("invoke ExitProcess, 0\n")
-              .append("end START");
+              .append("end start");
 
         generarCabecera();
     }
@@ -125,32 +129,30 @@ public class Assembler {
             //tomamos el atributo 'uso' del simbolo actual, desde la tabla de simbolos
             String uso = TablaSimbolos.obtenerAtributo(simbolo, "uso");
 
-            if (uso!=null && uso.equals("funcion")) continue;
+            //if (uso!=null && uso.equals("funcion")) continue;
 
             String tipo_actual = TablaSimbolos.obtenerAtributo(simbolo, "tipo");
             String lexema_actual = TablaSimbolos.obtenerAtributo(simbolo, "lexema");
             
-            if (tipo_actual!=null) continue;
+            if (tipo_actual==null) continue;
 
             switch (tipo_actual) {
-                /*case TablaTipos.STR_TYPE:
+                case TablaTipos.CADENA_TYPE:
                     //tomo el valor de la tabla de simbolos
-                    String valor_actual = TablaSimbolos.obtenerAtributo(simbolo, "valor");
-                    cabecera.append(lexema_actual.substring(1)).append(" db \"").append(valor_actual).append("\", 0\n");
+                    cabecera.append(lexema_actual.replace(' ', '@')).append(" db \"").append(lexema_actual).append("\", 0\n");
                     break;
-                */
+                
                 case TablaTipos.UI16_TYPE:
-                //case TablaTipos.FUNC_TYPE:
                     if (uso.equals("constante")) {
                         String lexema = lexema_actual;
                         lexema_actual = "@" + lexema_actual;
-                        cabecera.append(lexema_actual).append(" dd ").append(lexema).append("\n");
+                        cabecera.append(lexema_actual.replace(' ', '@')).append(" dd ").append(lexema).append("\n");
                     } else {
                         if (!lexema_actual.startsWith("@")) {
                             cabecera.append("_");
                         }
                         
-                        cabecera.append(lexema_actual).append(" dd ? \n");
+                        cabecera.append(lexema_actual.replace('.', '@')).append(" dd ? \n");
                     }
                    
                     break;
@@ -583,7 +585,7 @@ public class Assembler {
         if (TablaSimbolos.obtenerAtributo(puntToken, "uso").equals("constante")) {
             return "@" + token.replace('.', '@').replace('-', '@').replace('+', '@');
         } else if (Character.isLowerCase(caracter) || Character.isUpperCase(caracter)) {
-            return "_" + token;
+            return "_" + token.replace('.', '@').replace('-', '@').replace('+', '@');
         } else {
             return token;
         }
@@ -623,8 +625,6 @@ public class Assembler {
         }
         codigoDefer.add("#FINDEFER");
         Polaca.polaca.remove(indice);
-        System.out.println("Polaca1: " + Polaca.polaca);
-        System.out.println("codigoDefer1: " + codigoDefer);
     }
 
     private static void generarCodigoEjecucionDefer(int indice){
@@ -634,7 +634,23 @@ public class Assembler {
         }
         codigoDefer.remove(0); //Se remueve #FINDEFER
         Polaca.polaca.remove(indice); //Se remueve #EJECDEFER
-        System.out.println("Polaca2: " + Polaca.polaca);
-        System.out.println("codigoDefer2: " + codigoDefer);
     }
+
+    private static void RestructurarPolacaFunciones(){
+        int indice = 0;
+        while(indice < Polaca.polaca.size()){
+            if (Polaca.polaca.get(indice).equals("#FUN")){
+                indice--;
+                while (!Polaca.polaca.get(indice).equals("#RET")){
+                    funciones.add(Polaca.polaca.remove(indice));
+                }
+                funciones.add(Polaca.polaca.remove(indice));
+            }
+            indice++;
+        }
+        Polaca.polaca.addAll(0, funciones);
+        pos_start = funciones.size();
+        funciones.clear();
+    }
+
 }

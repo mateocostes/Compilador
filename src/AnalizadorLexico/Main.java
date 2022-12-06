@@ -7,6 +7,9 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import GeneracionCodigo.*;
 import Parser.Parser;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 
 public class Main {
 	public static ManejadorArchivo manejadorArchivo = new ManejadorArchivo();
@@ -35,9 +38,9 @@ public class Main {
 			String direccion = file.getPath();*/
 			String direccion = "";
 			//Direccion Mateo PC
-			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
+			//direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 			//Direccion Mateo Notebook
-			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
+			direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
 			//Direccion Franco
 			//direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
@@ -74,6 +77,23 @@ public class Main {
 			System.out.println();
 			Assembler.generarCodigo();
 			System.out.println("Assembler: " + Assembler.codigo);
+
+			//Se genera el archivo .asm
+			try {
+				String ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
+				StringBuilder contenido = Assembler.codigo;
+				File file = new File(ruta);
+				// Si el archivo no existe es creado
+				if (!file.exists()) {
+					file.createNewFile();
+				}
+				FileWriter fw = new FileWriter(file);
+				BufferedWriter bw = new BufferedWriter(fw);
+				bw.write(contenido.toString());
+				bw.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		//}       
 	}
  }

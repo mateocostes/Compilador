@@ -10,6 +10,7 @@ public class TablaTipos {
     public static final String F64_TYPE = "f64";
     public static final String UI16_TYPE = "ui16";
     public static final String FUNC_TYPE = "funcion";
+    public static final String CADENA_TYPE = "cadena";
     public static final String ERROR_TYPE = "error";
 
     private static final String[][] tiposSumaResta = { { UI16_TYPE, ERROR_TYPE, ERROR_TYPE },
@@ -46,7 +47,7 @@ public class TablaTipos {
             puntOp = TablaSimbolos.obtenerClave(op);
         }
         else{
-            puntOp = TablaSimbolos.obtenerClaveID(op);
+            puntOp = TablaSimbolos.obtenerClave(op);
         }
         String tipo = TablaSimbolos.obtenerAtributo(puntOp, "tipo");
 
