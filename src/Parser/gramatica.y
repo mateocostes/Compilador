@@ -172,7 +172,7 @@ factor       		:   CTE_INT  	{Main.estructurasSintacticas.add("[Lexico: linea " 
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 									
 					| 	invocacion
-					|	TOF64 '(' expresion ')'
+					|	TOF64 '(' expresion ')' {Main.polaca.addElementPolaca("#TOF64");}
 					|	error_factor
 					;
 					
@@ -211,11 +211,15 @@ parametro_real				:	ID  {Main.estructurasSintacticas.add("[Parser: linea " + thi
 							|	CTE_INT {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $1.sval);
 										String cte = $1.sval;
 										Main.polaca.addElementPolaca(cte);
-										this.cantidad_parametros_reales++;}
+										this.cantidad_parametros_reales++;
+										int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
+										this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
 							|	CTE_DBL {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $1.sval);
 										String cte = $1.sval;
 										Main.polaca.addElementPolaca(cte);
-										this.cantidad_parametros_reales++;}
+										this.cantidad_parametros_reales++;
+										int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(cte);
+										this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "uso", "constante");}
 							|	'-' CTE_INT {$$ = new ParserVal("-"+$2.sval); Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo la constante entera: " + $$.sval);
 											this.cantidad_parametros_reales++;
 											actualizarRango();}
@@ -299,6 +303,7 @@ mensaje_pantalla	:	OUT '(' CADENA ')'	';' {String cadena = $3.sval;
 					
 invocacion_discard	: 	DISCARD ID parametros_discard	{String id = $2.sval;
 														Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
+														Main.polaca.addElementPolaca("#DISCARD");
 														int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); //se obtiene la clave
 														if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
 															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
@@ -317,8 +322,8 @@ parametros_discard	:	'(' lista_parametros_reales ')' ';' {Main.estructurasSintac
 					
 expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());
 						Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));} cuerpo_dountil
-					|	etiqueta ':' DO {Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
-										Main.polaca.apilar(Main.polaca.getSize());
+					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());
+										Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
 										String nombre_etiqueta = $1.sval;
 										incorporarInformacionSemantica(nombre_etiqueta, "", "etiqueta", this.ambito);}
 						cuerpo_dountil_etiqueta
@@ -330,7 +335,7 @@ etiqueta			: 	ID
 
 cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																				Main.polaca.addElementPolaca("");
-																				Main.polaca.addElementPolaca("#BF");}
+																				Main.polaca.addElementPolaca("#BT");}
 						cuerpo_asignacion_do_until 	{Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 												if (Main.polaca.existeBreak()){ //Hay un Break
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
@@ -343,7 +348,7 @@ cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Mai
 
 cuerpo_dountil_etiqueta	:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																								Main.polaca.addElementPolaca("");
-																								Main.polaca.addElementPolaca("#BF");}
+																								Main.polaca.addElementPolaca("#BT");}
 							cuerpo_asignacion_do_until {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
 												if (Main.polaca.existeBreak()){ //Hay un Break
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}

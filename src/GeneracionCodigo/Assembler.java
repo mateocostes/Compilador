@@ -17,7 +17,9 @@ public class Assembler {
 
     public static int pos_start;
 
-    public static boolean invocacion_funcion = false;
+    public static boolean tipo_tof64 = false;
+
+    public static StringBuilder conv_exp = new StringBuilder();
 
     public static ArrayList<Object> codigoDefer = new ArrayList<Object>();
     public static ArrayList<Object> funciones = new ArrayList<Object>();
@@ -51,22 +53,25 @@ public class Assembler {
                     generarOperador(token);
                     break;
                 case "#BI":
-                    generarSalto("JMP");
+                    generarSalto("JMP", "#BI");
                     break;
                 case "#BF":
-                    generarSalto(ultimaComparacion);
+                    generarSalto(ultimaComparacion, "#BF");
                     break;
                 case "#BT":
-                    generarSalto(negacion(ultimaComparacion));
+                    generarSalto(negacion(ultimaComparacion), "#BT");
                     break;
                 case "#CALL":
-                    generarLlamadoFuncion();
+                    generarLlamadoFuncion("#CALL");
+                    break;
+                case "#DISCARD":
+                    generarLlamadoFuncion("#DISCARD");
                     break;
                 case "#RET":
                     generarCodigoRetorno();
                     break;
                 case "#OUT":
-                    String cadena = pila_tokens.pop().replace(' ', '@');
+                    String cadena = '@' + pila_tokens.pop().replace(' ', '@');
                     codigo.append("invoke MessageBox, NULL, addr ").append(cadena).append(", addr ").append(cadena).append(", MB_OK \n");
                     break;
                 case "#FUN":
@@ -79,6 +84,9 @@ public class Assembler {
                 case "#EJECDEFER":
                     generarCodigoEjecucionDefer(indice);
                     indice--;
+                    break;
+                case "#TOF64":
+                    tipo_tof64 = true;
                     break;
                 default:
                     if (token.startsWith(":")) {   //entramos un label
@@ -140,8 +148,9 @@ public class Assembler {
 
             switch (tipo_actual) {
                 case TablaTipos.CADENA_TYPE:
-                    //tomo el valor de la tabla de simbolos
-                    cabecera.append(lexema_actual.replace(' ', '@')).append(" db \"").append(lexema_actual).append("\", 0\n");
+                    //Tomo el valor de la tabla de simbolos
+                    //Se pone @ al principio de la cadena para poder imprimir numeros
+                    cabecera.append('@').append(lexema_actual.replace(' ', '@')).append(" db \"").append(lexema_actual).append("\", 0\n");
                     break;
                 
                 case TablaTipos.UI16_TYPE:
@@ -172,7 +181,7 @@ public class Assembler {
                         if (! lexema_actual.startsWith("@")) {
                             cabecera.append("_");
                         }
-                        cabecera.append(lexema_actual).append(" dq ?\n");
+                        cabecera.append(lexema_actual.replace('.', '@')).append(" dq ?\n");
                     }
                     
                     break;
@@ -188,12 +197,11 @@ public class Assembler {
         String op2 = pila_tokens.pop();   //el primero que saco es el segundo operando, ya que fue el ultimo que lei de la polaca y el ultimo que agregue a la pila
         String op1 = pila_tokens.pop();
 
-        if ((operador.equals("=:") && (invocacion_funcion == false))) { //Si el operador es =: entonces los operandos estan al reves por como esta hecha la gramatica
+        if (operador.equals("=:")) { //Si el operador es =: entonces los operandos estan al reves por como esta hecha la gramatica
             String aux = op1;
             op1 = op2;
             op2 = aux;
         }
-
         String tipo = TablaTipos.getTipoAbarcativo(op1, op2, operador);
         switch (tipo) {
             case TablaTipos.UI16_TYPE:
@@ -206,8 +214,18 @@ public class Assembler {
                 generarOperacionFuncion(op1, op2);
                 break;
             default:
-                System.out.println("Algo esta mal");
-                TablaSimbolos.imprimirTabla();
+                if (tipo_tof64){
+                    tipo_tof64 = false;
+                    if (TablaTipos.getTipo(op1).equals(TablaTipos.UI16_TYPE)) {
+                        conv_exp.append("FILD ").append(renombre(op1)).append("\n");
+                    }
+                    if (TablaTipos.getTipo(op2).equals(TablaTipos.UI16_TYPE)) {
+                        conv_exp.append("FILD ").append(renombre(op2)).append("\n");
+                    }
+                    generarOperacionFlotantes(op1, op2, operador);
+                }
+                else
+                    System.out.println("Incompatibilidad de tipos");
         }
     }
  
@@ -357,26 +375,16 @@ public class Assembler {
 
         String aux;
 
-        //Si es UINT, la tengo que convertir a DOUBLE
-        if (TablaTipos.getTipo(op1).equals(TablaTipos.UI16_TYPE)) {
-            aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
-            codigo.append("FLD ").append(op1).append("\n");
-            codigo.append("FSTP ").append(aux).append("\n");
-            op1 = aux;
-        }
-        if (TablaTipos.getTipo(op2).equals(TablaTipos.UI16_TYPE)) {
-            aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
-            codigo.append("FLD ").append(op2).append("\n");
-            codigo.append("FSTP ").append(aux).append("\n");
-            op1 = aux;
-        }
-        
-
         switch (operador) {
             //nunca  va a llegar una operacion AND o OR entre doubles ya que al finalizar cada condicion guardo un UINT con el resultado de la condicion.
             case "+":
                 codigo.append("FLD ").append(op2).append("\n"); //apilo primero el op2 ya que quiero que me quede como el segundo que agarro para las operaciones que no son conmutativas
                 codigo.append("FLD ").append(op1).append("\n");
+
+                if (conv_exp.length() > 0){
+                    codigo.append(conv_exp);
+                    conv_exp.delete(0, conv_exp.length());
+                }
 
                 codigo.append("FADD\n");
                 aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
@@ -388,6 +396,11 @@ public class Assembler {
                 codigo.append("FLD ").append(op2).append("\n"); //apilo primero el op2 ya que quiero que me quede como el segundo que agarro para las operaciones que no son conmutativas
                 codigo.append("FLD ").append(op1).append("\n");
 
+                if (conv_exp.length() > 0){
+                    codigo.append(conv_exp);
+                    conv_exp.delete(0, conv_exp.length());
+                }
+
                 codigo.append("FSUB\n");
                 aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
                 codigo.append("FSTP ").append(aux).append("\n");
@@ -397,6 +410,11 @@ public class Assembler {
             case "*":
                 codigo.append("FLD ").append(op2).append("\n"); //apilo primero el op2 ya que quiero que me quede como el segundo que agarro para las operaciones que no son conmutativas
                 codigo.append("FLD ").append(op1).append("\n");
+
+                if (conv_exp.length() > 0){
+                    codigo.append(conv_exp);
+                    conv_exp.delete(0, conv_exp.length());
+                }
                 
                 codigo.append("FMUL\n");
                 aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
@@ -406,6 +424,12 @@ public class Assembler {
             
             case "=:":
                 codigo.append("FLD ").append(op2).append("\n");
+
+                if (conv_exp.length() > 0){
+                    codigo.append(conv_exp);
+                    conv_exp.delete(0, conv_exp.length());
+                }
+
                 codigo.append("FSTP ").append(op1).append("\n");
                 break;
             
@@ -413,6 +437,10 @@ public class Assembler {
                 aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
                 codigo.append("FLD ").append(op2).append("\n"); //cargo el operando dos para luego compararlo con cero
                 
+                if (conv_exp.length() > 0){
+                    codigo.append(conv_exp);
+                    conv_exp.delete(0, conv_exp.length());
+                }
                 //guardar 00h en una variable auxiliar
                 String _cero = ocuparAuxiliar(TablaTipos.UI16_TYPE);
                 codigo.append("MOV ").append(_cero).append(", 00h\n");
@@ -443,6 +471,7 @@ public class Assembler {
                 codigo.append("MOV " + aux + ", 00h\n"); 
                 codigo.append(aux.substring(1) + ":\n"); //creo una label para que salte y se saltee la instruccion de poner aux en cero en caso de que sea verdadera
                 pila_tokens.push(aux);
+                ultimaComparacion = "JNE";
                 break;
             case "=!":
                 codigo.append("FLD ").append(op1).append("\n"); 
@@ -457,6 +486,7 @@ public class Assembler {
                 codigo.append("MOV " + aux + ", 00h\n"); 
                 codigo.append(aux.substring(1) + ":\n"); //creo una label para que salte y se saltee la instruccion de poner aux en cero en caso de que sea verdadera
                 pila_tokens.push(aux);
+                ultimaComparacion = "JE";
                 break;
             
             case ">=":
@@ -472,6 +502,7 @@ public class Assembler {
                 codigo.append("MOV " + aux + ", 00h\n"); 
                 codigo.append(aux.substring(1) + ":\n"); 
                 pila_tokens.push(aux);
+                ultimaComparacion = "JB";
                 break;
             
             case ">":
@@ -487,6 +518,7 @@ public class Assembler {
                 codigo.append("MOV " + aux + ", 00h\n"); 
                 codigo.append(aux.substring(1) + ":\n"); //creo una label para que salte y se saltee la instruccion de poner aux en cero en caso de que sea verdadera
                 pila_tokens.push(aux);
+                ultimaComparacion = "JNA";
                 break;
             
             case "<=":
@@ -502,6 +534,7 @@ public class Assembler {
                 codigo.append("MOV " + aux + ", 00h\n"); 
                 codigo.append(aux.substring(1) + ":\n"); 
                 pila_tokens.push(aux);
+                ultimaComparacion = "JA";
                 break;
             
             case "<":
@@ -517,6 +550,7 @@ public class Assembler {
                 codigo.append("MOV " + aux + ", 00h\n"); 
                 codigo.append(aux.substring(1) + ":\n"); 
                 pila_tokens.push(aux);
+                ultimaComparacion = "JAE";
                 break;
             
             default:
@@ -525,12 +559,10 @@ public class Assembler {
         }
     }
 
-    private static void generarSalto(String salto) {
+    private static void generarSalto(String salto, String token) {
         String direccion = pila_tokens.pop();    
-        System.out.println("direccion: " + direccion);
-        if (!salto.equals("JMP") && ultimaComparacion.equals("")) {
-            String valor = pila_tokens.pop();
-            System.out.println("valor: " + valor);
+        //if (!salto.equals("JMP") && ultimaComparacion.equals("")) {
+            /*String valor = pila_tokens.pop();
             int punt_valor = TablaSimbolos.obtenerClave(valor);
             String uso = TablaSimbolos.obtenerAtributo(punt_valor, "uso");
             
@@ -539,25 +571,23 @@ public class Assembler {
 
             codigo.append("MOV ECX, ").append(valor).append("\n");
             codigo.append("OR ECX, 0\n");
-            codigo.append("JE L").append(direccion).append("\n");
-        } else {
+            codigo.append("JE L").append(direccion).append("\n");*/
+        //} else {
             codigo.append(salto).append(" L").append(direccion).append("\n");
-        }
-
-        ultimaComparacion = "";
+        //}
+        if (token.equals("#BF") || token.equals("#BT"))
+            ultimaComparacion = "";
     }
 
-    private static void generarLlamadoFuncion() {
+    private static void generarLlamadoFuncion(String token) {
         String funcion = pila_tokens.pop();
         int clave_funcion = TablaSimbolos.obtenerClave(funcion);
         int cant_parametros_funcion = Integer.parseInt(TablaSimbolos.obtenerAtributo(clave_funcion, "cantidad de parametros"));
-        invocacion_funcion = true;
         switch (cant_parametros_funcion){
             case 0:
                 //La funcion no tiene parametros
                 break;
             case 1: 
-                //String parametro_real = pila_tokens.pop();
                 String parametro_formal = TablaSimbolos.obtenerAtributo(clave_funcion, "parametro_1");
                 pila_tokens.push(parametro_formal);
                 generarOperador("=:");
@@ -577,8 +607,9 @@ public class Assembler {
                     break;
         }
         codigo.append("CALL ").append(funcion.replace('.', '@')).append("\n");
-        pila_tokens.push(funcion); //pusheo el retorno de la funcion
-        invocacion_funcion = false;
+        if (token.equals("#CALL"))
+            pila_tokens.push(funcion); //Pusheo el retorno de la funcion
+        //En caso de ser token = #DISCARD no pusheo el retorno de la funcion
     }
 
     private static String renombre(String token) {
@@ -603,6 +634,8 @@ public class Assembler {
             case "JLE": return "JG";
             case "JL": return "JGE";
             case "JGE": return "JL";
+            case "JNA": return "JA";
+            case "JA": return "JNA";
             default: return comparacion;
         }
     }

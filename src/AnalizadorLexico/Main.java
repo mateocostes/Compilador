@@ -38,9 +38,9 @@ public class Main {
 			String direccion = file.getPath();*/
 			String direccion = "";
 			//Direccion Mateo PC
-			//direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
+			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
 			//Direccion Mateo Notebook
-			direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
+			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
 			//Direccion Franco
 			//direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
@@ -80,7 +80,10 @@ public class Main {
 
 			//Se genera el archivo .asm
 			try {
-				String ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
+				String ruta = "";
+				//Ruta mateo notebook
+				//ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
+				ruta = "C:\\Users\\Mateo\\Desktop\\Compilador\\Codigos assembler\\conversion_explicita.asm";
 				StringBuilder contenido = Assembler.codigo;
 				File file = new File(ruta);
 				// Si el archivo no existe es creado
