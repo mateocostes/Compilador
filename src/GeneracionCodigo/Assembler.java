@@ -17,6 +17,8 @@ public class Assembler {
 
     public static int pos_start;
 
+    public static boolean invocacion_funcion = false;
+
     public static ArrayList<Object> codigoDefer = new ArrayList<Object>();
     public static ArrayList<Object> funciones = new ArrayList<Object>();
 
@@ -179,14 +181,14 @@ public class Assembler {
     }
 
     private static void generarCabeceraFuncion() {
-        codigo.append(pila_tokens.pop()).append(":").append("\n");
+        codigo.append(pila_tokens.pop().replace('.', '@')).append(":").append("\n");
     }
 
     public static void generarOperador(String operador) {
         String op2 = pila_tokens.pop();   //el primero que saco es el segundo operando, ya que fue el ultimo que lei de la polaca y el ultimo que agregue a la pila
         String op1 = pila_tokens.pop();
 
-        if (operador.equals("=:")) { //Si el operador es =: entonces los operandos estan al reves por como esta hecha la gramatica
+        if ((operador.equals("=:") && (invocacion_funcion == false))) { //Si el operador es =: entonces los operandos estan al reves por como esta hecha la gramatica
             String aux = op1;
             op1 = op2;
             op2 = aux;
@@ -547,8 +549,9 @@ public class Assembler {
 
     private static void generarLlamadoFuncion() {
         String funcion = pila_tokens.pop();
-        int clave_funcion = TablaSimbolos.obtenerClaveID(funcion);
+        int clave_funcion = TablaSimbolos.obtenerClave(funcion);
         int cant_parametros_funcion = Integer.parseInt(TablaSimbolos.obtenerAtributo(clave_funcion, "cantidad de parametros"));
+        invocacion_funcion = true;
         switch (cant_parametros_funcion){
             case 0:
                 //La funcion no tiene parametros
@@ -567,14 +570,15 @@ public class Assembler {
                     String parametro_formal_2 = TablaSimbolos.obtenerAtributo(clave_funcion, "parametro_2");
                     pila_tokens.push(parametro_real_1);
                     pila_tokens.push(parametro_formal_1);
-                    generarOperador(":=");
+                    generarOperador("=:");
                     pila_tokens.push(parametro_real_2);
                     pila_tokens.push(parametro_formal_2);
-                    generarOperador(":=");
+                    generarOperador("=:");
                     break;
         }
-        codigo.append("CALL ").append(funcion).append("\n");
+        codigo.append("CALL ").append(funcion.replace('.', '@')).append("\n");
         pila_tokens.push(funcion); //pusheo el retorno de la funcion
+        invocacion_funcion = false;
     }
 
     private static String renombre(String token) {

@@ -12,32 +12,24 @@ includelib \masm32\lib\user32.lib
 @ERROR_OVERFLOW_PRODUCTO db "ERROR: Overflow en operacion de producto", 0
 @ERROR_INVOCACION db "ERROR: Invocacion de funcion a si misma no permitida", 0
 _var1@prueba_nombre_programa dd ? 
-_var2@prueba_nombre_programa dd ? 
-@1 dd 1
-entro db "entro", 0
-@5 dd 5
-@aux0 dd ? 
-@aux1 dd ? 
+_funcion1@prueba_nombre_programa dd ? 
+_var2@prueba_nombre_programa@funcion1 dd ? 
+entro@a@funcion1 db "entro a funcion1", 0
+@2 dd 2
+llamo@a@funcion1 db "llamo a funcion1", 0
 .code
+funcion1@prueba_nombre_programa:
+MOV ECX, _var2@prueba_nombre_programa@funcion1
+MOV _var1@prueba_nombre_programa, ECX
+invoke MessageBox, NULL, addr _var1@prueba_nombre_programa, addr _var1@prueba_nombre_programa, MB_OK
+invoke MessageBox, NULL, addr entro@a@funcion1, addr entro@a@funcion1, MB_OK 
+RET
 start:
-MOV ECX, @1
+invoke MessageBox, NULL, addr llamo@a@funcion1, addr llamo@a@funcion1, MB_OK 
+MOV ECX, _var2@prueba_nombre_programa@funcion1
+MOV @2, ECX
+CALL funcion1@prueba_nombre_programa
+MOV ECX, _funcion1@prueba_nombre_programa
 MOV _var1@prueba_nombre_programa, ECX
-L3:
-MOV ECX, _var1@prueba_nombre_programa
-ADD ECX, @1
-MOV @aux0, ECX
-MOV ECX, @aux0
-MOV _var2@prueba_nombre_programa, ECX
-invoke MessageBox, NULL, addr entro, addr entro, MB_OK 
-MOV ECX, @5
-CMP _var1@prueba_nombre_programa, ECX
-JAE L23
-MOV ECX, _var1@prueba_nombre_programa
-ADD ECX, @1
-MOV @aux1, ECX
-MOV ECX, @aux1
-MOV _var1@prueba_nombre_programa, ECX
-JMP L3
-L23:
 invoke ExitProcess, 0
 end start

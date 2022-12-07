@@ -1094,6 +1094,18 @@ public void incorporarInformacionSemantica(String nombreLexema, String tipoLexem
 			Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico " + nombreLexema + ", ya fue declarada en ese ambito.");
 	}
 }
+
+public String ambitoReal(String nombre, String ambito){
+	String lexema = nombre + "." + ambito;
+	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema);
+	int posicion = lexema.lastIndexOf('.');
+	while ((clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO) && (posicion != -1)){
+		lexema = lexema.substring(0, posicion);
+		clave = this.analizadorLexico.tablaSimbolos.obtenerClave(lexema);
+		posicion = lexema.lastIndexOf('.');
+	}
+	return lexema;
+}
 					
 					
 
@@ -1102,7 +1114,7 @@ public void incorporarInformacionSemantica(String nombreLexema, String tipoLexem
 					
 					
 					
-//#line 1034 "Parser.java"
+//#line 1046 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1305,7 +1317,7 @@ break;
 case 20:
 //#line 67 "gramatica.y"
 {this.nombre_funcion = val_peek(0).sval;
-								Main.polaca.addElementPolaca(this.nombre_funcion);
+								Main.polaca.addElementPolaca(this.nombre_funcion + "." + this.ambito);
 								Main.polaca.addElementPolaca("#FUN");}
 break;
 case 23:
@@ -1333,7 +1345,7 @@ case 31:
 								String ambito_actual = ambito + "." + nombreFunc;
 								this.cantidad_parametros++;
 								incorporarInformacionSemantica(nombreParam, tipoParam, "nombre de parametro", ambito_actual);
-								this.parametros_declaracion_funcion.add(nombreParam);}
+								this.parametros_declaracion_funcion.add(ambitoReal(nombreParam, ambito_actual));}
 break;
 case 33:
 //#line 110 "gramatica.y"
@@ -1410,14 +1422,14 @@ case 55:
 //#line 168 "gramatica.y"
 {Main.estructurasSintacticas.add("[Lexico: linea " + this.analizadorLexico.linea + "]. se leyo el identificador:  " + val_peek(0).sval);
 									String id = val_peek(0).sval;
-									Main.polaca.addElementPolaca(id + "." + this.ambito);
+									Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
 break;
 case 59:
 //#line 180 "gramatica.y"
 {String id = val_peek(3).sval;
-															Main.polaca.addElementPolaca(id);
+															Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 															Main.polaca.addElementPolaca("#CALL");
 															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una invocacion a funcion");
 															int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); /*se obtiene la clave*/
@@ -1503,7 +1515,7 @@ case 86:
 //#line 252 "gramatica.y"
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion");
 												String id = val_peek(3).sval;
-												Main.polaca.addElementPolaca(id + "." + this.ambito);
+												Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
@@ -1547,7 +1559,7 @@ break;
 case 100:
 //#line 300 "gramatica.y"
 {String id = val_peek(1).sval;
-														Main.polaca.addElementPolaca(id + "." + this.ambito);
+														Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 														int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); /*se obtiene la clave*/
 														if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
 															Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
@@ -1610,7 +1622,7 @@ case 118:
 //#line 362 "gramatica.y"
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto una asignacion en la sentencia do-until");
 												String id = val_peek(2).sval;
-												Main.polaca.addElementPolaca(id + "." + this.ambito);
+												Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 												Main.polaca.addElementPolaca("=:");
 												if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
@@ -2169,7 +2181,7 @@ case 255:
 //#line 603 "gramatica.y"
 {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break con etiqueta en el cuerpo del do-until con etiqueta");}
 break;
-//#line 2096 "Parser.java"
+//#line 2108 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####

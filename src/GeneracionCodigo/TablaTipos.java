@@ -28,6 +28,7 @@ public class TablaTipos {
 
     public static String getTipoAbarcativo(String op1, String op2, String operador){
         // mirar en la tabla del operando que tipo queda entre esos 2 tipos
+        //var2.prueba_nombre_programa.funcion1
         String tipoOp1 = getTipo(op1);
         String tipoOp2 = getTipo(op2);
 
@@ -41,27 +42,14 @@ public class TablaTipos {
     }
 
     public static String getTipo(String op) {
-        int puntOp;
-        char caracter = op.charAt(0); //Obtengo el primer caracter del operando para saber si es una variable o una constante
-        if (Character.isDigit(caracter) || (caracter == '-')) { //Es una constante
+        int puntOp = TablaSimbolos.obtenerClave(op);
+        int posicion = op.lastIndexOf('.');
+        while ((puntOp == TablaSimbolos.NO_ENCONTRADO) && (posicion != -1)){
+            op = op.substring(0, posicion);
             puntOp = TablaSimbolos.obtenerClave(op);
-        }
-        else{
-            puntOp = TablaSimbolos.obtenerClave(op);
+            posicion = op.lastIndexOf('.');
         }
         String tipo = TablaSimbolos.obtenerAtributo(puntOp, "tipo");
-
-        if (tipo == FUNC_TYPE) {
-            // x = una_funcino() + 8 --> devo devolver el tipo de reforno de la funcion
-            String uso = TablaSimbolos.obtenerAtributo(puntOp, "uso");
-            if(uso == FUNC_TYPE)
-                return uso;             //REVISAR EL CASO QUE SE MUESTRA DEBAJO
-        }
-        // a = 2
-        // b = func_suma <--- func_suma es una funcoin 
-        // c = a + b    <-- incorrecto
-        // c = a + b()  <-- correcto
-
         return tipo; 
     }
 
