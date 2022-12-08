@@ -78,6 +78,7 @@ funcion_parametros	:	'(' lista_parametros ')' ':' tipo '{'  	{Main.estructurasSi
 																int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombreFunc + "." + ambito); //se obtiene la clave
 																if(clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){ // si esta declarada
 																	this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "cantidad de parametros", Integer.toString(this.cantidad_parametros)); // se agrega la cantidad de parametros a la tabla de simbolos
+																	this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "funciones_invocadas", "");
 																	for (int i = 1; i <= parametros_declaracion_funcion.size(); i++)
 																		this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "parametro_" + i, this.parametros_declaracion_funcion.get(i-1));
 																}
@@ -183,13 +184,14 @@ invocacion			: 	ID '(' lista_parametros_reales ')'	{String id = $1.sval;
 															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. se realizo una invocacion a funcion");
 															int clave = this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito); //se obtiene la clave
 															if (clave == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
-																Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");
+																Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la funcion " + id + ", no fue declarada en ese ambito");
 															}
 															else{
 																if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
 																	Main.warnings.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
 															}
-															this.cantidad_parametros_reales = 0;}
+															this.cantidad_parametros_reales = 0;
+															/*agregarInvocacionFuncion(clave, id);*/}
 					|	error_invocacion
 					;
 
@@ -312,7 +314,8 @@ invocacion_discard	: 	DISCARD ID parametros_discard	{String id = $2.sval;
 														if (Integer.parseInt(this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "cantidad de parametros")) != this.cantidad_parametros_reales)
 															Main.warnings.add("[Parser: linea " + this.analizadorLexico.linea + "]. Warning sintactico : El numero de parametros de la funcion " + id + ", no coincide con su declaracion");
 														}
-														this.cantidad_parametros_reales = 0;}
+														this.cantidad_parametros_reales = 0;
+														/*agregarInvocacionFuncion(clave, id);*/}
 					|	error_invocacion_discard
 					;
 					
@@ -704,6 +707,19 @@ public String ambitoReal(String nombre, String ambito){
 		posicion = lexema.lastIndexOf('.');
 	}
 	return lexema;
+}
+
+public void agregarInvocacionFuncion(int clave_funcion_invocada, String funcion_invocada){
+	if (clave_funcion_invocada != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+		if (this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave_funcion_invocada, "uso").equals("funcion")){
+			String aux = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave_funcion_invocada, "funciones_invocadas");
+			if (aux.equals("")){
+				this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave_funcion_invocada, funcion_invocada);
+			}
+			else
+				this.analizadorLexico.tablaSimbolos.actulizarSimbolo(clave_funcion_invocada, aux + "." + funcion_invocada);
+		}
+	}
 }
 					
 					

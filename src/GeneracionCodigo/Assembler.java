@@ -28,7 +28,7 @@ public class Assembler {
     private static String nombreAux2bytes = "@aux2bytes"; 
 
     private static final String ERROR_DIVISION_POR_CERO = "ERROR: Division por cero";   //strings de error constantes en el codigo
-    private static final String ERROR_OVERFLOW_PRODUCTO = "ERROR: Overflow en operacion de producto";   
+    private static final String ERROR_RESTA_NEGATIVA = "ERROR: Resultados negativos en restas de enteros sin signo";   
     private static final String ERROR_INVOCACION = "ERROR: Invocacion de funcion a si misma no permitida";
     
     public static void generarCodigo() {
@@ -123,7 +123,7 @@ public class Assembler {
             .append(nombreAux2bytes).append(" dw ? \n")
             //agregamos las constantes de error
             .append("@ERROR_DIVISION_POR_CERO db \"" + ERROR_DIVISION_POR_CERO + "\", 0\n")
-            .append("@ERROR_OVERFLOW_PRODUCTO db \"" + ERROR_OVERFLOW_PRODUCTO + "\", 0\n")
+            .append("@ERROR_RESTA_NEGATIVA db \"" + ERROR_RESTA_NEGATIVA + "\", 0\n")
             .append("@ERROR_INVOCACION db \"" + ERROR_INVOCACION + "\", 0\n");
 
         generarCodigoDatos(cabecera);
@@ -251,38 +251,11 @@ public class Assembler {
         codigo.append(aux.substring(1)).append(":\n"); //declaro una label        
     }
 
-    private static void generarErrorOverflow(String aux){
-        //genera el codigo necesario ante un error de overflow de una operacion de producto de enteros
-        //utilizamos el flag de overflow para indicar que se ha producido un overflow
-        
-        codigo.append("JNO ").append(aux.substring(1)).append("\n");    
-        codigo.append("invoke MessageBox, NULL, addr @ERROR_OVERFLOW_PRODUCTO, addr @ERROR_OVERFLOW_PRODUCTO, MB_OK\n");
+    private static void generarErrorRestaNegativa(String aux){
+        codigo.append("JGE ").append(aux.substring(1)).append("\n");    
+        codigo.append("invoke MessageBox, NULL, addr @ERROR_RESTA_NEGATIVA, addr @ERROR_RESTA_NEGATIVA, MB_OK\n");
         codigo.append("invoke ExitProcess, 0\n");
         codigo.append(aux.substring(1)).append(":\n"); //declaro una label        
-    }
-
-    private static void generarErrorInvocacion(String funcion, String funcion_actual) {
-        //genera el codigo necesario ante un error de invocacion de una funcion:
-        //El codigo Assembler debera controlar que una funcion no pueda invocarse a si misma. 
-     
-        int punt_funcion = TablaSimbolos.obtenerClaveID(funcion);
-        String uso = TablaSimbolos.obtenerAtributo(punt_funcion, "uso"); 
-
-        if (uso.equals("variable")) {
-            funcion = renombre(funcion);  //renombramos la variable de funcion
-            codigo.append("MOV EAX, [").append(funcion).append("]\n");
-        } else 
-            codigo.append("MOV EAX, ").append(funcion).append("\n");
-
-        String label = "@aux" + auxiliarDisponible;
-        ++auxiliarDisponible;
-
-        codigo.append("MOV EBX, ").append(funcion_actual).append("\n");
-        codigo.append("CMP EBX, EAX\n");
-        codigo.append("JNE ").append(label).append("\n");
-        codigo.append("invoke MessageBox, NULL, addr @ERROR_INVOCACION, addr @ERROR_INVOCACION, MB_OK\n");
-        codigo.append("invoke ExitProcess, 0\n");
-        codigo.append(label).append(":\n"); //declaro una label        
     }
 
     private static void generarOperacionEnteros(String op1, String op2, String operador) {
@@ -303,6 +276,8 @@ public class Assembler {
                 codigo.append("MOV ECX, ").append(op1).append("\n"); //muevo siempre al registro ECX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
                 codigo.append("SUB ECX, ").append(op2).append("\n");
                 aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                codigo.append("CMP ").append("ECX,").append(" 00h\n"); 
+                generarErrorRestaNegativa(aux);
                 codigo.append("MOV ").append(aux).append(", ECX\n");
                 pila_tokens.push(aux);
                 break;
@@ -310,7 +285,6 @@ public class Assembler {
                 codigo.append("MOV EAX, ").append(op1).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
                 codigo.append("MUL ").append(op2).append("\n");
                 aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
-                generarErrorOverflow(aux); //el aux solo se pasa para poner el nombre de la etiqueta de salto.
                 codigo.append("MOV ").append(aux).append(", EAX\n");
                 pila_tokens.push(aux);
                 break;
