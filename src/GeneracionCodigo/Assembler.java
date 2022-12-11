@@ -13,7 +13,7 @@ public class Assembler {
 
     public static int posicionActualPolaca = 0;
 
-    public static String ultimaFuncionLlamada;
+    public static String ultimaFuncionLlamada = "";
 
     public static int pos_start;
 
@@ -32,11 +32,17 @@ public class Assembler {
     private static final String ERROR_INVOCACION = "ERROR: Invocacion de funcion a si misma no permitida";
     
     public static void generarCodigo() {
+        boolean agrego_start = false;
         RestructurarPolacaFunciones();
         //funcion principal que genera el codigo del programa, utilizando los tokes de la pocala y simbolos de la respectiva tabla
         for (int indice = 0; indice < Polaca.polaca.size(); indice++){
-            if (indice == pos_start)
+
+            if ((indice == pos_start)){
                 codigo.append("start:\n");
+                agrego_start = true;
+                ultimaFuncionLlamada = "";
+            }
+
             String token = String.valueOf(Polaca.polaca.get(indice));
             switch (token) {
                 case "*":
@@ -101,6 +107,9 @@ public class Assembler {
             //System.out.println("Se leyo el token: " + token + ", la pila actual es: " + pila_tokens);
         }
 
+        if (!agrego_start) //Se utiliza cuando no hay sentencias en el bloque principal
+            codigo.append("start:\n");
+
         codigo.append("invoke ExitProcess, 0\n")
               .append("end start");
 
@@ -158,12 +167,15 @@ public class Assembler {
                         String lexema = lexema_actual;
                         lexema_actual = "@" + lexema_actual;
                         cabecera.append(lexema_actual.replace(' ', '@')).append(" dd ").append(lexema).append("\n");
-                    } else {
+                    } 
+                    else {
                         if (!lexema_actual.startsWith("@")) {
                             cabecera.append("_");
                         }
-                        
-                        cabecera.append(lexema_actual.replace('.', '@')).append(" dd ? \n");
+                        if (uso.equals("funcion"))
+                            cabecera.append(lexema_actual.replace('.', '@')).append(" dd ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
+                        else
+                            cabecera.append(lexema_actual.replace('.', '@')).append(" dd ? \n");
                     }
                    
                     break;
@@ -181,6 +193,9 @@ public class Assembler {
                         if (! lexema_actual.startsWith("@")) {
                             cabecera.append("_");
                         }
+                        if (uso.equals("funcion"))
+                            cabecera.append(lexema_actual.replace('.', '@')).append(" dd ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
+                        else
                         cabecera.append(lexema_actual.replace('.', '@')).append(" dq ?\n");
                     }
                     
@@ -190,7 +205,8 @@ public class Assembler {
     }
 
     private static void generarCabeceraFuncion() {
-        codigo.append(pila_tokens.pop().replace('.', '@')).append(":").append("\n");
+        ultimaFuncionLlamada = pila_tokens.pop();
+        codigo.append(ultimaFuncionLlamada.replace('.', '@')).append(":").append("\n");
     }
 
     public static void generarOperador(String operador) {
@@ -256,6 +272,18 @@ public class Assembler {
         codigo.append("invoke MessageBox, NULL, addr @ERROR_RESTA_NEGATIVA, addr @ERROR_RESTA_NEGATIVA, MB_OK\n");
         codigo.append("invoke ExitProcess, 0\n");
         codigo.append(aux.substring(1)).append(":\n"); //declaro una label        
+    }
+
+    private static void generarErrorInvocacion(String funcion, String funcion_actual) {
+        codigo.append("MOV EAX, ").append('_').append(funcion.replace('.', '@')).append("\n");
+        String label = "@aux" + auxiliarDisponible;
+        ++auxiliarDisponible;
+        codigo.append("MOV EBX, ").append('_').append(funcion_actual.replace('.', '@')).append("\n");
+        codigo.append("CMP EBX, EAX\n");
+        codigo.append("JNE ").append(label).append("\n");
+        codigo.append("invoke MessageBox, NULL, addr @ERROR_INVOCACION, addr @ERROR_INVOCACION, MB_OK\n");
+        codigo.append("invoke ExitProcess, 0\n");
+        codigo.append(label).append(":\n"); //declaro una label        
     }
 
     private static void generarOperacionEnteros(String op1, String op2, String operador) {
@@ -555,6 +583,8 @@ public class Assembler {
 
     private static void generarLlamadoFuncion(String token) {
         String funcion = pila_tokens.pop();
+        if (ultimaFuncionLlamada != "") //Esta en una declaracion de funcion
+            generarErrorInvocacion(funcion, ultimaFuncionLlamada);
         int clave_funcion = TablaSimbolos.obtenerClave(funcion);
         int cant_parametros_funcion = Integer.parseInt(TablaSimbolos.obtenerAtributo(clave_funcion, "cantidad de parametros"));
         switch (cant_parametros_funcion){

@@ -329,3 +329,38 @@ prueba_nombre_programa {
 	out('llamo a funcion1');
 	var1 =: funcion1(2);
 }
+
+prueba_nombre_programa {
+	ui16 var1;
+	fun funcion1(ui16 var2) : ui16 {
+		var1 =: funcion1(var2);
+		return (var1);
+	};
+	var1 =: funcion1(2);
+}
+
+prueba_nombre_programa {
+	ui16 var1;
+	fun funcion0(ui16 var2) : ui16 {
+		return (var2);
+	};
+	fun funcion1(ui16 var2) : ui16 {
+		var1 =: funcion0(var2);
+		return (var1);
+	};
+	var1 =: funcion1(2);
+}
+
+prueba_nombre_programa {
+	ui16 var1;
+	fun funcion1(ui16 var2) : ui16 {
+		var1 =: 3;
+		return (var1);
+	};
+	var1 =: funcion1(2);
+}
+
+
+
+PROBLEMA SI NO INVOCO A LA FUNCION, NO TIRA ERROR
+REALIZO SOLO EL CHEQUEO SI SE ESTA EN UNA FUNCION
