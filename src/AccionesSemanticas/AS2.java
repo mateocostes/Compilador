@@ -19,7 +19,7 @@ public class AS2 extends AccionSemantica{
         else {
             if (buffer.length() > AnalizadorLexico.LONGITUDIDENTIFICADOR) {
                 simbolo = buffer.substring(0, AnalizadorLexico.LONGITUDIDENTIFICADOR-1);
-                Main.erroresLexico.add("Warning Lexico linea: " + AnalizadorLexico.linea + ". la longitud del identificador es mayor a " + AnalizadorLexico.LONGITUDIDENTIFICADOR + ", por lo que fue truncado.");
+                Main.warnings.add("Warning Lexico linea: " + AnalizadorLexico.linea + ". la longitud del identificador es mayor a " + AnalizadorLexico.LONGITUDIDENTIFICADOR + ", por lo que fue truncado.");
                 
             }
             identificador = AnalizadorLexico.IDENTIFICADOR;

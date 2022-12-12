@@ -14,7 +14,7 @@ public class AS4 extends AccionSemantica{
         String exp = simbolo.replace("D", "E"); //Para leer exponencial
         double valor = Double.parseDouble(exp);
         if (!dentroRango(valor)) {
-        	Main.erroresLexico.add("Error Lexico linea: " + AnalizadorLexico.linea + ". Error en el rango del numero double, el numero fue truncado a un rango aceptado.");
+        	Main.warnings.add("Error Lexico linea: " + AnalizadorLexico.linea + ". Error en el rango del numero double, el numero fue truncado a un rango aceptado.");
             if (valor < AnalizadorLexico.MINDOUBLEPOS) {
                 simbolo = Double.toString(AnalizadorLexico.MINDOUBLEPOS);
             } else {

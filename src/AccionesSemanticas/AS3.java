@@ -10,7 +10,7 @@ public class AS3 extends AccionSemantica{
         if ((AnalizadorLexico.caracter != AnalizadorLexico.NUEVALINEA) || (AnalizadorLexico.caracter != AnalizadorLexico.BLANCO) || ((AnalizadorLexico.caracter != AnalizadorLexico.TAB)))
         	AnalizadorLexico.cursor--;
         if (valor > AnalizadorLexico.MAXINT) {
-        	Main.erroresLexico.add("Error Lexico linea: " + AnalizadorLexico.linea + ". Error en el rango del numero entero.");
+        	Main.warnings.add("Error Lexico linea: " + AnalizadorLexico.linea + ". Error en el rango del numero entero, el numero fue truncado a un rango aceptado.");
             simbolo = String.valueOf(AnalizadorLexico.MAXINT);//Se trunca hasta el valor mayor
             }
         if (TablaSimbolos.obtenerClave(simbolo) == TablaSimbolos.NO_ENCONTRADO) {

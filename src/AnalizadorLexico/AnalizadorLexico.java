@@ -117,7 +117,7 @@ public class AnalizadorLexico {
 			caracter = codigoFuente.charAt(cursor);
 			cursor++;
 			columna = this.getValorSimbolo(caracter);	
-			token = matricesTransicion.getAccion(estado, columna).ejecutar();
+ 			token = matricesTransicion.getAccion(estado, columna).ejecutar();
 			estado = matricesTransicion.getEstado(estado, columna);
 			if ((estado == -1) && (token != null)) {//-1 es Estado final
 				AccionesSemanticas.AccionSemantica.buffer = ""; //Se reinicia el buffer

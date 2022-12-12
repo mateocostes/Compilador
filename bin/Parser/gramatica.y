@@ -419,7 +419,7 @@ error_conjunto_sentencias 	:	error sentencias '}' {Main.erroresSintacticos.add("
 							|	'}'	{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencia/s y la llave de apertura");}
 							|	'{' '}' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta/n sentencia/s dentro de las '{' '}'");}	 
 							|	error sentencias {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, faltan las llaves de apertura y cierre");}
-							|	'{' sentencias {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, se detecto un bloque sin llave de cierre");}
+							|	'{' sentencias error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, se detecto un bloque sin llave de cierre");}
 							;
 							
 						  
@@ -513,6 +513,7 @@ error_asignacion	:	ASSIGN expresion ';' {Main.erroresSintacticos.add("[Parser: l
 					|	ID ASSIGN ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la expresion a asignar");}
 					|	ID ASSIGN expresion error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' en la sentencia de asignacion");}
 					|	ID error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, solo se define el identificador de la asignacion");}
+					|	ID ASSIGN error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, no se reconoce la expresion");}
 					;
 				
 error_seleccion	:	IF cuerpo_seleccion {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion en la sentencia de seleccion");}
