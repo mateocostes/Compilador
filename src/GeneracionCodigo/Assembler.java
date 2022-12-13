@@ -1,6 +1,9 @@
 package GeneracionCodigo;
 
 import java.util.*;
+
+import javax.lang.model.util.ElementScanner6;
+
 import AnalizadorLexico.*;
 
 public class Assembler {
@@ -93,9 +96,11 @@ public class Assembler {
                     break;
                 case "#TOF64":
                     tipo_tof64 = true;
+                    String var = pila_tokens.pop();
+                    pila_tokens.push(var + "." + "#tof64");
                     break;
                 default:
-                    if (token.startsWith(":")) {   //entramos un label
+                    if (token.startsWith(":")) {   //encontramos un label
                         codigo.append(token.substring(1)).append(":\n");
                     } 
                     else {
@@ -156,13 +161,11 @@ public class Assembler {
             if (tipo_actual==null) continue;
 
             switch (tipo_actual) {
-                case TablaTipos.CADENA_TYPE:
-                    //Tomo el valor de la tabla de simbolos
-                    //Se pone @ al principio de la cadena para poder imprimir numeros
+                case Tipos.CADENA_TYPE:
                     cabecera.append('@').append(lexema_actual.replace(' ', '@')).append(" db \"").append(lexema_actual).append("\", 0\n");
                     break;
                 
-                case TablaTipos.UI16_TYPE:
+                case Tipos.UI16_TYPE:
                     if (uso.equals("constante")) {
                         String lexema = lexema_actual;
                         lexema_actual = "@" + lexema_actual;
@@ -180,7 +183,7 @@ public class Assembler {
                    
                     break;
                 
-                case TablaTipos.F64_TYPE:        //en caso que el simbolo de tipo double y sea una constante
+                case Tipos.F64_TYPE:        //en caso que el simbolo de tipo double y sea una constante
                     if (uso.equals("constante")) {
                         String lexema = lexema_actual;
 
@@ -218,45 +221,37 @@ public class Assembler {
             op1 = op2;
             op2 = aux;
         }
-        String tipo = TablaTipos.getTipoAbarcativo(op1, op2, operador);
-        switch (tipo) {
-            case TablaTipos.UI16_TYPE:
-                generarOperacionEnteros(op1, op2, operador);
-                break;
-            case TablaTipos.F64_TYPE:
-                generarOperacionFlotantes(op1, op2, operador);
-                break;
-            case TablaTipos.FUNC_TYPE:
-                generarOperacionFuncion(op1, op2);
-                break;
-            default:
-                if (tipo_tof64){
-                    tipo_tof64 = false;
-                    if (TablaTipos.getTipo(op1).equals(TablaTipos.UI16_TYPE)) {
-                        conv_exp.append("FILD ").append(renombre(op1)).append("\n");
-                    }
-                    if (TablaTipos.getTipo(op2).equals(TablaTipos.UI16_TYPE)) {
-                        conv_exp.append("FILD ").append(renombre(op2)).append("\n");
-                    }
+        if (!tipo_tof64){
+            String tipo = Tipos.getTipoOperacion(op1, op2, operador);
+            switch (tipo) {
+                case Tipos.UI16_TYPE:
+                    generarOperacionEnteros(op1, op2, operador);
+                    break;
+                case Tipos.F64_TYPE:
                     generarOperacionFlotantes(op1, op2, operador);
-                }
-                else
+                    break;
+                default:
                     System.out.println("Incompatibilidad de tipos");
+            }
         }
-    }
- 
-    public static void generarOperacionFuncion(String op1, String op2) {
-        int punt_op2 = TablaSimbolos.obtenerClave(op2);
-        String uso = TablaSimbolos.obtenerAtributo(punt_op2, "uso");
-        
-        op1 = renombre(op1);
-
-        //si el uso es una variable, renombramos el operando
-        if (uso.equals("variable"))
-            op2 = renombre(op2);
-
-        codigo.append("MOV EAX, ").append(op2).append("\n");
-        codigo.append("MOV ").append(op1).append(", EAX\n");
+        else{
+            tipo_tof64 = false;
+            if (((op1.contains("#tof64")) && (Tipos.getTipo(op2).equals(Tipos.UI16_TYPE))) || ((op2.contains("#tof64")) && (Tipos.getTipo(op1).equals(Tipos.UI16_TYPE))))
+                System.out.println("Incompatibilidad de tipos");
+            else{
+                if (op1.contains("#tof64")) {
+                    int pos = op1.lastIndexOf(".");
+                    op1 = op1.substring(0, pos);
+                    conv_exp.append("FILD ").append(renombre(op1)).append("\n");
+                }
+                if (op2.contains("#tof64")) {
+                    int pos = op2.lastIndexOf(".");
+                    op2 = op2.substring(0, pos);
+                    conv_exp.append("FILD ").append(renombre(op2)).append("\n");
+                }
+                generarOperacionFlotantes(op1, op2, operador);
+            }
+        }
     }
 
     private static void generarErrorDivCero(String aux){
@@ -296,14 +291,14 @@ public class Assembler {
             case "+":
                 codigo.append("MOV ECX, ").append(op1).append("\n"); //muevo siempre al registro ECX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
                 codigo.append("ADD ECX, ").append(op2).append("\n");
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV ").append(aux).append(", ECX\n");
                 pila_tokens.push(aux);
                 break;
             case "-":
                 codigo.append("MOV ECX, ").append(op1).append("\n"); //muevo siempre al registro ECX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
                 codigo.append("SUB ECX, ").append(op2).append("\n");
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("CMP ").append("ECX,").append(" 00h\n"); 
                 generarErrorRestaNegativa(aux);
                 codigo.append("MOV ").append(aux).append(", ECX\n");
@@ -312,7 +307,7 @@ public class Assembler {
             case "*":
                 codigo.append("MOV EAX, ").append(op1).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
                 codigo.append("MUL ").append(op2).append("\n");
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV ").append(aux).append(", EAX\n");
                 pila_tokens.push(aux);
                 break;
@@ -321,7 +316,7 @@ public class Assembler {
                 codigo.append("MOV ").append(op1).append(", ECX\n");
                 break;
             case "/":   
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("CMP ").append(op2).append(", 00h\n"); 
                 generarErrorDivCero(aux);
                 codigo.append("MOV EAX, ").append(op1).append("\n"); //el dividendo debe estar en EAX
@@ -389,7 +384,7 @@ public class Assembler {
                 }
 
                 codigo.append("FADD\n");
-                aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
+                aux = ocuparAuxiliar(Tipos.F64_TYPE);
                 codigo.append("FSTP ").append(aux).append("\n");
                 pila_tokens.push(aux);
                 break;
@@ -404,7 +399,7 @@ public class Assembler {
                 }
 
                 codigo.append("FSUB\n");
-                aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
+                aux = ocuparAuxiliar(Tipos.F64_TYPE);
                 codigo.append("FSTP ").append(aux).append("\n");
                 pila_tokens.push(aux);
                 break;
@@ -419,7 +414,7 @@ public class Assembler {
                 }
                 
                 codigo.append("FMUL\n");
-                aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
+                aux = ocuparAuxiliar(Tipos.F64_TYPE);
                 codigo.append("FSTP ").append(aux).append("\n");
                 pila_tokens.push(aux);
                 break;
@@ -436,7 +431,7 @@ public class Assembler {
                 break;
             
             case "/":
-                aux = ocuparAuxiliar(TablaTipos.F64_TYPE);
+                aux = ocuparAuxiliar(Tipos.F64_TYPE);
                 codigo.append("FLD ").append(op2).append("\n"); //cargo el operando dos para luego compararlo con cero
                 
                 if (conv_exp.length() > 0){
@@ -444,7 +439,7 @@ public class Assembler {
                     conv_exp.delete(0, conv_exp.length());
                 }
                 //guardar 00h en una variable auxiliar
-                String _cero = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                String _cero = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV ").append(_cero).append(", 00h\n");
                 codigo.append("FCOM " + _cero + "\n");
                 codigo.append("FSTSW ").append(nombreAux2bytes).append("\n");// cargo la palabra de estado en la memoria
@@ -467,7 +462,7 @@ public class Assembler {
                 codigo.append("MOV AX, ").append(nombreAux2bytes).append("\n"); //copia el contenido en el registro AX
                 codigo.append("SAHF").append("\n"); //Almacena en los 8 bits menos significativos del regisro de indicadores el valor del registro AH
 
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV " + aux + ", 0FFh\n");
                 codigo.append("JE " + aux.substring(1) + "\n"); // si llega a ser verdadero salto y sigo con la ejecucion. En caso contrario tengo que poner el valor de aux en 0
                 codigo.append("MOV " + aux + ", 00h\n"); 
@@ -482,7 +477,7 @@ public class Assembler {
                 codigo.append("MOV AX, ").append(nombreAux2bytes).append("\n"); //copia el contenido en el registro AX
                 codigo.append("SAHF").append("\n"); //Almacena en los 8 bits menos significativos del regisro de indicadores el valor del registro AH
 
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV " + aux + ", 0FFh\n");
                 codigo.append("JNE " + aux.substring(1) + "\n"); // si llega a ser verdadero salto y sigo con la ejecucion. En caso contrario tengo que poner el valor de aux en 0
                 codigo.append("MOV " + aux + ", 00h\n"); 
@@ -498,7 +493,7 @@ public class Assembler {
                 codigo.append("MOV AX, ").append(nombreAux2bytes).append("\n"); //copia el contenido en el registro AX
                 codigo.append("SAHF").append("\n"); //Almacena en los 8 bits menos significativos del regisro de indicadores el valor del registro AH
 
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV " + aux + ", 0FFh\n");
                 codigo.append("JAE " + aux.substring(1) + "\n"); // si llega a ser verdadero salto y sigo con la ejecucion. En caso contrario tengo que poner el valor de aux en 0
                 codigo.append("MOV " + aux + ", 00h\n"); 
@@ -514,7 +509,7 @@ public class Assembler {
                 codigo.append("MOV AX, ").append(nombreAux2bytes).append("\n"); //copia el contenido en el registro AX
                 codigo.append("SAHF").append("\n"); //Almacena en los 8 bits menos significativos del regisro de indicadores el valor del registro AH
 
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV " + aux + ", 0FFh\n"); 
                 codigo.append("JA " + aux.substring(1) + "\n"); // si llega a ser verdadero salto y sigo con la ejecucion. En caso contrario tengo que poner el valor de aux en 0
                 codigo.append("MOV " + aux + ", 00h\n"); 
@@ -530,7 +525,7 @@ public class Assembler {
                 codigo.append("MOV AX, ").append(nombreAux2bytes).append("\n"); //copia el contenido en el registro AX
                 codigo.append("SAHF").append("\n"); //Almacena en los 8 bits menos significativos del regisro de indicadores el valor del registro AH
 
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV " + aux + ", 0FFh\n");
                 codigo.append("JBE " + aux.substring(1) + "\n"); // si llega a ser verdadero salto y sigo con la ejecucion. En caso contrario tengo que poner el valor de aux en 0
                 codigo.append("MOV " + aux + ", 00h\n"); 
@@ -546,7 +541,7 @@ public class Assembler {
                 codigo.append("MOV AX, ").append(nombreAux2bytes).append("\n"); //copia el contenido en el registro AX
                 codigo.append("SAHF").append("\n"); //Almacena en los 8 bits menos significativos del regisro de indicadores el valor del registro AH
 
-                aux = ocuparAuxiliar(TablaTipos.UI16_TYPE);
+                aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("MOV " + aux + ", 0FFh\n");
                 codigo.append("JB " + aux.substring(1) + "\n"); // si llega a ser verdadero salto y sigo con la ejecucion. En caso contrario tengo que poner el valor de aux en 0
                 codigo.append("MOV " + aux + ", 00h\n"); 
@@ -563,20 +558,7 @@ public class Assembler {
 
     private static void generarSalto(String salto, String token) {
         String direccion = pila_tokens.pop();    
-        //if (!salto.equals("JMP") && ultimaComparacion.equals("")) {
-            /*String valor = pila_tokens.pop();
-            int punt_valor = TablaSimbolos.obtenerClave(valor);
-            String uso = TablaSimbolos.obtenerAtributo(punt_valor, "uso");
-            
-            if (uso.equals("variable"))
-                valor = renombre(valor);
-
-            codigo.append("MOV ECX, ").append(valor).append("\n");
-            codigo.append("OR ECX, 0\n");
-            codigo.append("JE L").append(direccion).append("\n");*/
-        //} else {
-            codigo.append(salto).append(" L").append(direccion).append("\n");
-        //}
+        codigo.append(salto).append(" L").append(direccion).append("\n");
         if (token.equals("#BF") || token.equals("#BT"))
             ultimaComparacion = "";
     }
