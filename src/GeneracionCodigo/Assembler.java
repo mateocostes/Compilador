@@ -2,8 +2,6 @@ package GeneracionCodigo;
 
 import java.util.*;
 
-import javax.lang.model.util.ElementScanner6;
-
 import AnalizadorLexico.*;
 
 public class Assembler {
@@ -27,7 +25,6 @@ public class Assembler {
     public static ArrayList<Object> codigoDefer = new ArrayList<Object>();
     public static ArrayList<Object> funciones = new ArrayList<Object>();
 
-    private static final String AUX_CONTRATO = "@contrato";
     private static String nombreAux2bytes = "@aux2bytes"; 
 
     private static final String ERROR_DIVISION_POR_CERO = "ERROR: Division por cero";   //strings de error constantes en el codigo
@@ -108,8 +105,6 @@ public class Assembler {
                     }
                     break;
             }
-            //Impresion por pantalla para debuggear el codigo
-            //System.out.println("Se leyo el token: " + token + ", la pila actual es: " + pila_tokens);
         }
 
         if (!agrego_start) //Se utiliza cuando no hay sentencias en el bloque principal
@@ -122,7 +117,7 @@ public class Assembler {
     }
 
     private static void generarCabecera() {
-    //funcoin encargada de la generacion de la cabecera del codigo
+    //funcion encargada de la generacion de la cabecera del codigo
         StringBuilder cabecera = new StringBuilder();
 
         cabecera.append(".386\n")
@@ -150,16 +145,10 @@ public class Assembler {
     private static void generarCodigoDatos(StringBuilder cabecera) {
         //funcion utilizada para generar el codigo necesario para todos los datos del programa, presentes en la tabla de simbolos
         for (int simbolo : TablaSimbolos.obtenerConjuntoPunteros()) {
-            //tomamos el atributo 'uso' del simbolo actual, desde la tabla de simbolos
             String uso = TablaSimbolos.obtenerAtributo(simbolo, "uso");
-
-            //if (uso!=null && uso.equals("funcion")) continue;
-
             String tipo_actual = TablaSimbolos.obtenerAtributo(simbolo, "tipo");
             String lexema_actual = TablaSimbolos.obtenerAtributo(simbolo, "lexema");
-            
             if (tipo_actual==null) continue;
-
             switch (tipo_actual) {
                 case Tipos.CADENA_TYPE:
                     cabecera.append('@').append(lexema_actual.replace(' ', '@')).append(" db \"").append(lexema_actual).append("\", 0\n");
@@ -179,17 +168,14 @@ public class Assembler {
                             cabecera.append(lexema_actual.replace('.', '@')).append(" dd ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
                         else
                             cabecera.append(lexema_actual.replace('.', '@')).append(" dd ? \n");
-                    }
-                   
+                    }   
                     break;
                 
                 case Tipos.F64_TYPE:        //en caso que el simbolo de tipo double y sea una constante
                     if (uso.equals("constante")) {
                         String lexema = lexema_actual;
-
                         if (lexema_actual.charAt(0) == '.')
                             lexema = "0" + lexema;
-
                         lexema_actual = "@" + lexema_actual.replace('.', '@').replace('-', '@').replace('+', '@');  //cambiamos el punto por una @ 
                         cabecera.append(lexema_actual).append(" REAL4 ").append(lexema).append("\n");   //y agregamos el simbolo a la cabecera con REAL4
                     } else {
@@ -200,8 +186,7 @@ public class Assembler {
                             cabecera.append(lexema_actual.replace('.', '@')).append(" dd ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
                         else
                         cabecera.append(lexema_actual.replace('.', '@')).append(" dq ?\n");
-                    }
-                    
+                    }   
                     break;
             }
         }
@@ -213,9 +198,8 @@ public class Assembler {
     }
 
     public static void generarOperador(String operador) {
-        String op2 = pila_tokens.pop();   //el primero que saco es el segundo operando, ya que fue el ultimo que lei de la polaca y el ultimo que agregue a la pila
+        String op2 = pila_tokens.pop();   
         String op1 = pila_tokens.pop();
-
         if (operador.equals("=:")) { //Si el operador es =: entonces los operandos estan al reves por como esta hecha la gramatica
             String aux = op1;
             op1 = op2;
@@ -593,11 +577,8 @@ public class Assembler {
                     break;
         }
         codigo.append("CALL ").append(funcion.replace('.', '@')).append("\n");
-        if (token.equals("#DISCARD")){
-            pila_tokens.pop();
-            //pila_tokens.push(funcion); //Pusheo el retorno de la funcion
-            //generarOperador("=:");
-        }
+        if (token.equals("#CALL"))
+            pila_tokens.push(TablaSimbolos.obtenerAtributo(clave_funcion, "retorno"));
             //En caso de ser token = #DISCARD no pusheo el retorno de la funcion
     }
 
@@ -625,6 +606,8 @@ public class Assembler {
             case "JGE": return "JL";
             case "JNA": return "JA";
             case "JA": return "JNA";
+            case "JNAE": return "JAE";
+            case "JAE": return "JNAE";
             default: return comparacion;
         }
     }
@@ -640,6 +623,7 @@ public class Assembler {
 
     private static void generarCodigoRetorno() {
         //generarOperador(":=");
+        TablaSimbolos.agregarAtributo(TablaSimbolos.obtenerClave(ultimaFuncionLlamada), "retorno", pila_tokens.pop());
         codigo.append("RET\n");
     } 
 

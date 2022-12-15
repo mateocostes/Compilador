@@ -71,20 +71,20 @@ public class Main {
 			for (int i=0; i<warnings.size();i++) 
 				System.out.println(warnings.get(i));
 	        
-	        analizadorLexico.tablaSimbolos.imprimirTabla();
 	        polaca.imprimirLista();
 
 			System.out.println();
 			Assembler.generarCodigo();
+			analizadorLexico.tablaSimbolos.imprimirTabla();
 			//System.out.println("Assembler: " + Assembler.codigo);
 
 			//Se genera el archivo .asm
 			try {
 				String ruta = "";
 				//Ruta mateo notebook
-				ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
-				//ruta = "C:\\Users\\Mateo\\Desktop\\Compilador\\Codigos assembler\\conversion_explicita.asm";
-				//ruta = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\prueba\\variable_no_alcanzada.asm";
+				//ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
+				ruta = "C:\\Users\\Mateo\\Desktop\\Compilador\\Codigos assembler\\conversion_explicita.asm";
+				//ruta = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\prueba\\error_division_cero.asm";
 				StringBuilder contenido = Assembler.codigo;
 				File file = new File(ruta);
 				// Si el archivo no existe es creado
