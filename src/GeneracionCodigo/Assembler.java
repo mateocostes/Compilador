@@ -231,13 +231,13 @@ public class Assembler {
                     generarOperacionFlotantes(op1, op2, operador);
                     break;
                 default:
-                    System.out.println("Incompatibilidad de tipos");
+                    System.out.println("Error en la generacion de codigo: Incompatibilidad de tipos \n");
             }
         }
         else{
             tipo_tof64 = false;
             if (((op1.contains("#tof64")) && (Tipos.getTipo(op2).equals(Tipos.UI16_TYPE))) || ((op2.contains("#tof64")) && (Tipos.getTipo(op1).equals(Tipos.UI16_TYPE))))
-                System.out.println("Incompatibilidad de tipos");
+                System.out.println("Error en la generacion de codigo: Incompatibilidad de tipos \n");
             else{
                 if (op1.contains("#tof64")) {
                     int pos = op1.lastIndexOf(".");
@@ -593,9 +593,12 @@ public class Assembler {
                     break;
         }
         codigo.append("CALL ").append(funcion.replace('.', '@')).append("\n");
-        if (token.equals("#CALL"))
-            pila_tokens.push(funcion); //Pusheo el retorno de la funcion
-        //En caso de ser token = #DISCARD no pusheo el retorno de la funcion
+        if (token.equals("#DISCARD")){
+            pila_tokens.pop();
+            //pila_tokens.push(funcion); //Pusheo el retorno de la funcion
+            //generarOperador("=:");
+        }
+            //En caso de ser token = #DISCARD no pusheo el retorno de la funcion
     }
 
     private static String renombre(String token) {

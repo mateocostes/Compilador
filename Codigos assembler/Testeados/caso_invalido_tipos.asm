@@ -11,19 +11,31 @@ includelib \masm32\lib\user32.lib
 @ERROR_DIVISION_POR_CERO db "ERROR: Division por cero", 0
 @ERROR_RESTA_NEGATIVA db "ERROR: Resultados negativos en restas de enteros sin signo", 0
 @ERROR_INVOCACION db "ERROR: Invocacion de funcion a si misma no permitida", 0
-_a@prueba_nombre_programa dq ?
-_b@prueba_nombre_programa dd ? 
+_var1@prueba_nombre_programa dd ? 
+_var2@prueba_nombre_programa dq ?
 @1 dd 1
+@1@0 REAL4 1.0
+@tipo@valido db "tipo valido", 0
+@tipo@invalido db "tipo invalido", 0
 @aux0 dd ? 
 .code
 start:
 MOV ECX, @1
-MOV _b@prueba_nombre_programa, ECX
-MOV ECX, _b@prueba_nombre_programa
-ADD ECX, _b@prueba_nombre_programa
-MOV @aux0, ECX
-FLD @aux0
-FILD @aux0
-FSTP _a@prueba_nombre_programa
+MOV _var1@prueba_nombre_programa, ECX
+FLD _var2@prueba_nombre_programa
+FCOM @1@0
+FSTSW @aux2bytes
+MOV AX, @aux2bytes
+SAHF
+MOV @aux0, 0FFh
+JE aux0
+MOV @aux0, 00h
+aux0:
+JNE L15
+invoke MessageBox, NULL, addr @tipo@valido, addr @tipo@valido, MB_OK 
+JMP L18
+L15:
+invoke MessageBox, NULL, addr @tipo@invalido, addr @tipo@invalido, MB_OK 
+L18:
 invoke ExitProcess, 0
 end start

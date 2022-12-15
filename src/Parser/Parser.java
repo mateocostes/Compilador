@@ -1469,7 +1469,7 @@ case 66:
 //#line 205 "gramatica.y"
 {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + val_peek(0).sval);
 									String id = val_peek(0).sval;
-									Main.polaca.addElementPolaca(id);
+									Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 									this.cantidad_parametros_reales++;
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}

@@ -204,7 +204,7 @@ parametros_reales			: 	parametro_real
 							
 parametro_real				:	ID  {Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se leyo el parametro -> " + $1.sval);
 									String id = $1.sval;
-									Main.polaca.addElementPolaca(id);
+									Main.polaca.addElementPolaca(ambitoReal(id, this.ambito));
 									this.cantidad_parametros_reales++;
 									if (this.analizadorLexico.tablaSimbolos.obtenerClaveAmbito(id + "." + this.ambito) == this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO)
 										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la variable " + id + ", no fue declarada en ese ambito");}
