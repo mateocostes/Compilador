@@ -134,6 +134,9 @@ public class AnalizadorLexico {
 			if (caracter == '\n')
 				linea++;
 		}
+		if ((caracter == '$') && ((estado == 9 || estado == 10)))
+			Main.erroresLexico.add("Error Lexico linea: " + AnalizadorLexico.linea + ". No se cierra el comentario.");
+
 		return new Token(0);
 	}
 }

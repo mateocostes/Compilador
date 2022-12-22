@@ -44,7 +44,7 @@ public class Polaca {
 		this.existeBreak = true;
 	}
 	
-	public void imprimirLista() {
+	public static void imprimirLista() {
 		System.out.println("\nPolaca:");
 		for (int i = 0; i < polaca.size(); i++)
 			System.out.println(i + " " + polaca.get(i));

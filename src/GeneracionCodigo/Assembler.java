@@ -27,6 +27,10 @@ public class Assembler {
 
     private static String nombreAux2bytes = "@aux2bytes"; 
 
+    private static boolean error_generacion_codigo = false;
+
+    private static boolean existen_errores = false;
+
     private static final String ERROR_DIVISION_POR_CERO = "ERROR: Division por cero";   //strings de error constantes en el codigo
     private static final String ERROR_RESTA_NEGATIVA = "ERROR: Resultados negativos en restas de enteros sin signo";   
     private static final String ERROR_INVOCACION = "ERROR: Invocacion de funcion a si misma no permitida";
@@ -36,84 +40,95 @@ public class Assembler {
         RestructurarPolacaFunciones();
         //funcion principal que genera el codigo del programa, utilizando los tokes de la pocala y simbolos de la respectiva tabla
         for (int indice = 0; indice < Polaca.polaca.size(); indice++){
+            
+            if (Main.erroresLexico.isEmpty() && Main.erroresSintacticos.isEmpty() && !error_generacion_codigo){
 
-            if ((indice == pos_start)){
-                codigo.append("start:\n");
-                agrego_start = true;
-                ultimaFuncionLlamada = "";
+                if ((indice == pos_start)){
+                    codigo.append("start:\n");
+                    agrego_start = true;
+                    ultimaFuncionLlamada = "";
+                }
+
+                String token = String.valueOf(Polaca.polaca.get(indice));
+                switch (token) {
+                    case "*":
+                    case "+":
+                    case "=:":  
+                    case "-":
+                    case "/":
+                    case ">=":
+                    case ">":   
+                    case "<=":
+                    case "<":
+                    case "=!":
+                    case "=":
+                        generarOperador(token);
+                        break;
+                    case "#BI":
+                        generarSalto("JMP", "#BI");
+                        break;
+                    case "#BF":
+                        generarSalto(ultimaComparacion, "#BF");
+                        break;
+                    case "#BT":
+                        generarSalto(negacion(ultimaComparacion), "#BT");
+                        break;
+                    case "#CALL":
+                        generarLlamadoFuncion("#CALL");
+                        break;
+                    case "#DISCARD":
+                        generarLlamadoFuncion("#DISCARD");
+                        break;
+                    case "#RET":
+                        generarCodigoRetorno();
+                        break;
+                    case "#OUT":
+                        String cadena = '@' + pila_tokens.pop().replace(' ', '@');
+                        codigo.append("invoke MessageBox, NULL, addr ").append(cadena).append(", addr ").append(cadena).append(", MB_OK \n");
+                        break;
+                    case "#FUN":
+                        generarCabeceraFuncion();
+                        break;
+                    case "#DEFER":
+                        generarCodigoDefer(indice);
+                        indice--;
+                        break;
+                    case "#EJECDEFER":
+                        generarCodigoEjecucionDefer(indice);
+                        indice--;
+                        break;
+                    case "#TOF64":
+                        tipo_tof64 = true;
+                        String var = pila_tokens.pop();
+                        pila_tokens.push(var + "." + "#tof64");
+                        break;
+                    default:
+                        if (token.startsWith(":")) {   //encontramos un label
+                            codigo.append(token.substring(1)).append(":\n");
+                        } 
+                        else {
+                            pila_tokens.push(token);
+                        }
+                        break;
+                }
             }
-
-            String token = String.valueOf(Polaca.polaca.get(indice));
-            switch (token) {
-                case "*":
-                case "+":
-                case "=:":  
-                case "-":
-                case "/":
-                case ">=":
-                case ">":   
-                case "<=":
-                case "<":
-                case "=!":
-                case "=":
-                    generarOperador(token);
-                    break;
-                case "#BI":
-                    generarSalto("JMP", "#BI");
-                    break;
-                case "#BF":
-                    generarSalto(ultimaComparacion, "#BF");
-                    break;
-                case "#BT":
-                    generarSalto(negacion(ultimaComparacion), "#BT");
-                    break;
-                case "#CALL":
-                    generarLlamadoFuncion("#CALL");
-                    break;
-                case "#DISCARD":
-                    generarLlamadoFuncion("#DISCARD");
-                    break;
-                case "#RET":
-                    generarCodigoRetorno();
-                    break;
-                case "#OUT":
-                    String cadena = '@' + pila_tokens.pop().replace(' ', '@');
-                    codigo.append("invoke MessageBox, NULL, addr ").append(cadena).append(", addr ").append(cadena).append(", MB_OK \n");
-                    break;
-                case "#FUN":
-                    generarCabeceraFuncion();
-                    break;
-                case "#DEFER":
-                    generarCodigoDefer(indice);
-                    indice--;
-                    break;
-                case "#EJECDEFER":
-                    generarCodigoEjecucionDefer(indice);
-                    indice--;
-                    break;
-                case "#TOF64":
-                    tipo_tof64 = true;
-                    String var = pila_tokens.pop();
-                    pila_tokens.push(var + "." + "#tof64");
-                    break;
-                default:
-                    if (token.startsWith(":")) {   //encontramos un label
-                        codigo.append(token.substring(1)).append(":\n");
-                    } 
-                    else {
-                        pila_tokens.push(token);
-                    }
-                    break;
+            else{
+                existen_errores = true;
             }
         }
 
-        if (!agrego_start) //Se utiliza cuando no hay sentencias en el bloque principal
+        if (existen_errores){
+            System.out.println("Se detectaron errores, se aborto la compilacion \n");
+        }
+        else{
+            if (!agrego_start) //Se utiliza cuando no hay sentencias en el bloque principal
             codigo.append("start:\n");
 
-        codigo.append("invoke ExitProcess, 0\n")
-              .append("end start");
+            codigo.append("invoke ExitProcess, 0\n")
+                .append("end start");
 
-        generarCabecera();
+            generarCabecera();
+        }
     }
 
     private static void generarCabecera() {
@@ -215,13 +230,17 @@ public class Assembler {
                     generarOperacionFlotantes(op1, op2, operador);
                     break;
                 default:
-                    System.out.println("Error en la generacion de codigo: Incompatibilidad de tipos \n");
+                    System.out.println("Error en la generacion de codigo: Incompatibilidad de tipos en la sentencia: " + eliminarAmbito(op1) + " " + operador + " " + eliminarAmbito(op2) + "\n");
+                    error_generacion_codigo = true;
+                    break;
             }
         }
         else{
             tipo_tof64 = false;
-            if (((op1.contains("#tof64")) && (Tipos.getTipo(op2).equals(Tipos.UI16_TYPE))) || ((op2.contains("#tof64")) && (Tipos.getTipo(op1).equals(Tipos.UI16_TYPE))))
-                System.out.println("Error en la generacion de codigo: Incompatibilidad de tipos \n");
+            if (((op1.contains("#tof64")) && (Tipos.getTipo(op2).equals(Tipos.UI16_TYPE))) || ((op2.contains("#tof64")) && (Tipos.getTipo(op1).equals(Tipos.UI16_TYPE)))){
+                System.out.println("Error en la generacion de codigo: Incompatibilidad de tipos en la sentencia: " + eliminarAmbito(op1) + " " + operador + " " + eliminarAmbito(op2) + "\n");
+                error_generacion_codigo = true;
+            }
             else{
                 if (op1.contains("#tof64")) {
                     int pos = op1.lastIndexOf(".");
@@ -304,6 +323,7 @@ public class Assembler {
                 codigo.append("CMP ").append(op2).append(", 00h\n"); 
                 generarErrorDivCero(aux);
                 codigo.append("MOV EAX, ").append(op1).append("\n"); //el dividendo debe estar en EAX
+                codigo.append("MOV EDX, 0").append("\n");
                 codigo.append("DIV ").append(op2).append("\n");
                 codigo.append("MOV ").append(aux).append(", EAX\n");
                 pila_tokens.push(aux);
@@ -648,19 +668,39 @@ public class Assembler {
 
     private static void RestructurarPolacaFunciones(){
         int indice = 0;
+        Stack<Integer> pila_inicio_funciones = new Stack<>();
         while(indice < Polaca.polaca.size()){
             if (Polaca.polaca.get(indice).equals("#FUN")){
-                indice--;
-                while (!Polaca.polaca.get(indice).equals("#RET")){
-                    funciones.add(Polaca.polaca.remove(indice));
-                }
-                funciones.add(Polaca.polaca.remove(indice));
+                int pos = indice;
+                pos--;
+                pila_inicio_funciones.push(pos);
+            }
+
+            if (Polaca.polaca.get(indice).equals("#RET")){
+                int pos_inicio = pila_inicio_funciones.pop();
+                int pos_fin = indice;
+                pos_fin++;
+                funciones.addAll(Polaca.polaca.subList(pos_inicio, pos_fin));
+                int pos_indice = indice - Polaca.polaca.subList(pos_inicio, pos_fin).size();
+                Polaca.polaca.subList(pos_inicio, pos_fin).clear();
+                indice = pos_indice;
             }
             indice++;
         }
         Polaca.polaca.addAll(0, funciones);
         pos_start = funciones.size();
         funciones.clear();
+    }
+
+    public static String eliminarAmbito(String lexema){
+        int clave = TablaSimbolos.obtenerClave(lexema);
+        if (clave != TablaSimbolos.NO_ENCONTRADO){
+            String uso = TablaSimbolos.obtenerAtributo(clave, "uso");
+            if (!uso.equals("Constante")){
+                return lexema.substring(0, lexema.indexOf("."));
+            }
+        }
+        return lexema;
     }
 
 }
