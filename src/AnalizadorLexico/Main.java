@@ -83,7 +83,7 @@ public class Main {
 				String ruta = "";
 				//Ruta mateo notebook
 				//ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
-				ruta = "C:\\Users\\Mateo\\Desktop\\Compilador\\Codigos assembler\\funciones_anidadas.asm";
+				ruta = "C:\\Users\\Mateo\\Desktop\\Compilador\\Codigos assembler\\anidamiento.asm";
 				//ruta = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\prueba\\error_division_cero.asm";
 				StringBuilder contenido = Assembler.codigo;
 				File file = new File(ruta);

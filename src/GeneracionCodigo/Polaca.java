@@ -6,7 +6,6 @@ import java.util.Stack;
 public class Polaca {
 	public static ArrayList<Object> polaca;
 	public static Stack<Integer> pila = new Stack<Integer>();
-	private boolean existeBreak = false;
 	
 	public Polaca() {
 		polaca = new ArrayList<Object>();
@@ -17,7 +16,6 @@ public class Polaca {
 	}
 	
 	public static void apilar(int indice) {
-		System.out.println("indice: " + indice);
 		pila.push(indice);
 	}
 
@@ -33,15 +31,6 @@ public class Polaca {
 		//System.out.println("index: " + index);
 		this.polaca.add(index, elem); //Lo agrega detras de la posicion por parametro
 		this.polaca.remove(index + 1); //Borro el siguiente que el vacio
-	}
-
-	public boolean existeBreak(){
-		System.out.println("existeBreak: " + this.existeBreak);
-		return this.existeBreak;
-	}
-
-	public void contieneBreak(){
-		this.existeBreak = true;
 	}
 	
 	public static void imprimirLista() {

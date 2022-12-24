@@ -1,0 +1,7 @@
+Errores reentrega:
+Ejemplo ambitos_anidados: Corregido
+Ejemplo anim-etiq: Corregido - Se acomodo la gramatica
+Ejemplo anidamiento: Corregido
+Ejemplo caso_invalido_tipos: Se corrigio el mensaje y cuando se detecta un error de tipos de aborta el programa
+Ejemplo error_fun_no_decla: El mensaje de error se muestra correctamente
+Ejemplo error_fun_redeclarada: Falta cerrar el comentario; Se agrego error de comentario no cerrado. Cerrando el comentario se muestra el error correctamente.  

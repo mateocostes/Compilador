@@ -396,6 +396,23 @@ prueba_nombre_programa {
 	out('fin');
 }
 
+prueba_nombre_programa {
+	ui16 var1, var2;
+	var1 =: 1;
+	eti1: do { 
+		out('entro');
+		if (var1 = 4) then{
+			out('es 4');
+			break : eti1;}
+		else{
+			out('no es 4');
+		}end_if;
+		out('despues break');
+	}
+	until (var1 > 5) : (var1 =: var1 + 1);
+	out('fin');
+}
+
 
 PROBLEMA SI NO INVOCO A LA FUNCION, NO TIRA ERROR
 REALIZO SOLO EL CHEQUEO SI SE ESTA EN UNA FUNCION

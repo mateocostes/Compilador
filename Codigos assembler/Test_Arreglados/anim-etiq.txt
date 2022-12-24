@@ -1,0 +1,15 @@
+prueba_nombre_programa {
+	ui16 i, j;
+	etiqueta1 : do { 
+		out ('loop exterior');
+		etiqueta2: do {
+		   out('loop interior');
+		   break : etiqueta2;
+		   }
+		   until(i > 10) : (i =: i + 1);
+		out ('sale de loop interior');
+		break : etiqueta1;
+	}
+	until (j > 5 ) : (j =:j + 1);
+	out ('fin');
+}

@@ -1,7 +1,7 @@
 %{
 package Parser;
 import AnalizadorLexico.*;
-import java.util.ArrayList;
+import java.util.*;
 %}
 
 //declaracion de tokens a recibir del Analizador Lexico
@@ -238,6 +238,29 @@ comparador          :   MENOR_IGUAL {$$ = new ParserVal("<=");}
 					
 ejecutable			: 	ejecutable_comun
 					|	ejecutable_defer
+					| 	BREAK ';' 	{if (!esta_do_until.isEmpty()){
+										contiene_break = true;
+										Main.polaca.apilar(Main.polaca.getSize());
+										Main.polaca.addElementPolaca("");
+										Main.polaca.addElementPolaca("#BI");
+										Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un break");
+									}
+									else
+										Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, no se puede declarar un Break fuera de un do-until");} 
+					|	BREAK ':' etiqueta ';' 	{if (!esta_do_until_etiqueta.isEmpty()){
+													String nombre_etiqueta = $3.sval;
+													//if (etiqueta_actual.equals(nombre_etiqueta))
+														//contiene_break = true;
+													//Main.polaca.apilar(Main.polaca.getSize());
+													agregarInformacionBreak(nombre_etiqueta, Main.polaca.getSize());
+													Main.polaca.addElementPolaca("");
+													Main.polaca.addElementPolaca("#BI");
+													if (!(this.analizadorLexico.tablaSimbolos.existeEtiqueta(nombre_etiqueta + "." + this.ambito)))
+														Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la etiqueta " + nombre_etiqueta + " no se corresponde con la etiqueta del do-until");
+													Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un break con etiqueta");
+												}
+												else
+													Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, no se puede declarar un Break con Etiqueta fuera de un do-until con etiqueta");} 
 					;
 					
 ejecutable_comun	: 	invocacion_discard
@@ -321,11 +344,16 @@ parametros_discard	:	'(' lista_parametros_reales ')' ';' {Main.estructurasSintac
 					;
 					
 expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());
-						Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));} cuerpo_dountil
+						Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
+						esta_do_until.push(true);} cuerpo_dountil
 					|	etiqueta ':' DO {Main.polaca.apilar(Main.polaca.getSize());
 										Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
 										String nombre_etiqueta = $1.sval;
-										incorporarInformacionSemantica(nombre_etiqueta, "", "etiqueta", this.ambito);}
+										incorporarInformacionSemantica(nombre_etiqueta, "", "etiqueta", this.ambito);
+										int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(nombre_etiqueta + "." + this.ambito);
+										this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "posiciones break", "-1");
+										esta_do_until_etiqueta.push(true);
+										etiqueta_actual.push(nombre_etiqueta);}
 						cuerpo_dountil_etiqueta
 					|	error_dountil
 					;
@@ -333,11 +361,13 @@ expresion_dountil	: 	DO {Main.polaca.apilar(Main.polaca.getSize());
 etiqueta			: 	ID
 					;
 
-cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
+cuerpo_dountil		: 	'{' ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																				Main.polaca.addElementPolaca("");
-																				Main.polaca.addElementPolaca("#BT");}
+																				Main.polaca.addElementPolaca("#BT");
+																				esta_do_until.pop();}
 						cuerpo_asignacion_do_until 	{Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
-												if (Main.polaca.existeBreak()){ //Hay un Break
+												if (contiene_break){ //Hay un Break
+													contiene_break = false;
 													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
 												Main.polaca.addElementPolaca(Main.polaca.desapilar());
 												Main.polaca.addElementPolaca("#BI");
@@ -346,12 +376,12 @@ cuerpo_dountil		: 	'{' bloque_de_sentencias_ejecutables '}' UNTIL condicion {Mai
 					|	error_cuerpo_dountil
 					;
 
-cuerpo_dountil_etiqueta	:	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
+cuerpo_dountil_etiqueta	:	'{' ejecutables '}' UNTIL condicion {Main.polaca.apilar(Main.polaca.getSize());
 																								Main.polaca.addElementPolaca("");
-																								Main.polaca.addElementPolaca("#BT");}
+																								Main.polaca.addElementPolaca("#BT");
+																								esta_do_until_etiqueta.pop();}
 							cuerpo_asignacion_do_until {Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());
-												if (Main.polaca.existeBreak()){ //Hay un Break
-													Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, Main.polaca.desapilar());}
+												actualizarPolacaBreaks();
 												Main.polaca.addElementPolaca(Main.polaca.desapilar());
 												Main.polaca.addElementPolaca("#BI");
 												Main.polaca.addElementPolaca(":L" + String.valueOf(Main.polaca.getSize()));
@@ -373,40 +403,6 @@ asignacion_do_until			:	ID ASSIGN expresion {Main.estructurasSintacticas.add("[P
 							|	error_asignacion_do_until
 							;
 					
-bloque_de_sentencias_ejecutables 	:	ejecutables BREAK ';' {Main.polaca.contieneBreak();
-															Main.polaca.apilar(Main.polaca.getSize());
-															Main.polaca.addElementPolaca("");
-															Main.polaca.addElementPolaca("#BI");
-															Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un break");}
-									|	ejecutables
-									|	BREAK ';' {Main.polaca.contieneBreak();
-												Main.polaca.apilar(Main.polaca.getSize());
-												Main.polaca.addElementPolaca("");
-												Main.polaca.addElementPolaca("#BI");
-												Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un break");}
-									|	error_bloque_sent_ejecutables
-									;
-
-									
-bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables BREAK ':' etiqueta ';' {Main.polaca.contieneBreak();
-																					Main.polaca.apilar(Main.polaca.getSize());
-																					Main.polaca.addElementPolaca("");
-																					Main.polaca.addElementPolaca("#BI");
-																					String nombre_etiqueta = $4.sval;
-																					if (!(this.analizadorLexico.tablaSimbolos.existeEtiqueta(nombre_etiqueta + "." + this.ambito)))
-																						Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la etiqueta " + nombre_etiqueta + " no se corresponde con la etiqueta del do-until");
-																					Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un break con etiqueta");}
-																						
-											|	BREAK ':' etiqueta ';' {Main.polaca.contieneBreak();
-																		Main.polaca.apilar(Main.polaca.getSize());
-																		Main.polaca.addElementPolaca("");
-																		Main.polaca.addElementPolaca("#BI");
-																		String nombre_etiqueta = $3.sval;
-																		if (!(this.analizadorLexico.tablaSimbolos.existeEtiqueta(nombre_etiqueta + "." + this.ambito)))
-																			Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, la etiqueta " + nombre_etiqueta + " no se corresponde con la etiqueta del do-until");
-																		Main.estructurasSintacticas.add("[Parser: linea " + this.analizadorLexico.linea + "]. Se detecto un break con etiqueta");}
-											|	error_bloque_de_sentencias_ejecutables_etiqueta
-											;
 									
 
 //ERRORES				
@@ -560,25 +556,26 @@ error_parametros_discard	:	lista_parametros_reales ')' ';' {Main.erroresSintacti
 							|	'(' lista_parametros_reales ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el parentesis de cierre de los parametros de la funcion discard");}
 							|	'(' lista_parametros_reales ')' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' al final de la funcion discard");}
 							;
+															
 
-error_dountil	:	error '{' bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el do en la sentencia do_until");}
-				|	etiqueta DO '{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego de la etiqueta en la sentencia do_until");}
-				|	':' DO 	{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta antes de los ':' en la sentencia do_until");}
+error_dountil	:	DO error{Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el cuerpo de la sentencia do_until");}
+				|	':' DO  {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta de la sentencia do_until");}
+				|	etiqueta DO {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta ':' en la sentencia do_until");}
 				;
 
 
-error_cuerpo_dountil	:	bloque_de_sentencias_ejecutables '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
+error_cuerpo_dountil	:	ejecutables '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until");}
 						|	'{' '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias ejecutables en la sentencia do_until");}
-						|	'{' bloque_de_sentencias_ejecutables UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
-						|	'{' bloque_de_sentencias_ejecutables '}' condicion ':' cuerpo_asignacion_do_until ';'  {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el until luego del bloque de sentencias en la sentencia do_until");}
-						|	'{' bloque_de_sentencias_ejecutables '}' UNTIL ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion luego del until en la sentencia do_until");}
+						|	'{' ejecutables UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until");}
+						|	'{' ejecutables '}' condicion ':' cuerpo_asignacion_do_until ';'  {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el until luego del bloque de sentencias en la sentencia do_until");}
+						|	'{' ejecutables '}' UNTIL ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion luego del until en la sentencia do_until");}
 						;
 						
-error_cuerpo_dountil_etiqueta	:	bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
+error_cuerpo_dountil_etiqueta	:	ejecutables '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '{' de apertura del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
 								|	'{' '}' UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el bloque de sentencias ejecutables en la sentencia do_until");}
-								|	'{' bloque_de_sentencias_ejecutables_etiqueta UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
-								|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' condicion ':' cuerpo_asignacion_do_until ';'  {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el until luego del bloque de sentencias en la sentencia do_until con etiqueta");}
-								|	'{' bloque_de_sentencias_ejecutables_etiqueta '}' UNTIL ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion luego del until en la sentencia do_until con etiqueta");}
+								|	'{' ejecutables UNTIL condicion ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la llave '}' de cierre del bloque de sentencias ejecutables en la sentencia do_until con etiqueta");}
+								|	'{' ejecutables '}' condicion ':' cuerpo_asignacion_do_until ';'  {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el until luego del bloque de sentencias en la sentencia do_until con etiqueta");}
+								|	'{' ejecutables '}' UNTIL ':' cuerpo_asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la condicion luego del until en la sentencia do_until con etiqueta");}
 								;
 				
 error_cuerpo_asignacion_do_until	:	asignacion_do_until ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego de la condicion en la sentencia do_until");}
@@ -590,25 +587,7 @@ error_cuerpo_asignacion_do_until	:	asignacion_do_until ';' {Main.erroresSintacti
 error_asignacion_do_until	:	ASSIGN expresion {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el identificador de la variable a asignar en la sentencia do-until");}
 							|	ID expresion {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el signo de asignacion en la sentencia do-until");}
 							|	ID ASSIGN error {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la expresion a asignar en la sentencia do-until");}
-							;
-
-error_bloque_sent_ejecutables	:	';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta al menos una sentencia ejecutable dentro del bloque de sentencias");}
-								|	ejecutables error ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break luego de la sentencia ejecutable");}
-								|	ejecutables BREAK {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego del break");}
-								|	BREAK {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego del break");}
-								;
-
-error_bloque_de_sentencias_ejecutables_etiqueta	:	ejecutables ':' etiqueta ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break luego de la sentencia");}
-												|	ejecutables BREAK etiqueta ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego del break");}
-												|	ejecutables BREAK ':' ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta luego del ':'");}
-												|	ejecutables BREAK ':' etiqueta {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la etiqueta");}
-												|	':' etiqueta ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break antes del ':'");}
-												|	BREAK etiqueta ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ':' luego del break");}
-												|	BREAK ':' ';' {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta la etiqueta luego del ':'");}
-												|	BREAK ':' etiqueta {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el ';' luego de la etiqueta");}
-												|	ejecutables {Main.erroresSintacticos.add("[Parser: linea " + this.analizadorLexico.linea + "]. Error sintactico, falta el break con etiqueta en el cuerpo del do-until con etiqueta");}
-												;
-												
+							;							
 
 %% 
 private AnalizadorLexico analizadorLexico;
@@ -621,6 +600,10 @@ public static boolean existeDefer = false;
 public static boolean agregoCteDbl = false;
 public static String nombre_funcion_invocacion = "";
 public static ArrayList<String> parametros_declaracion_funcion;
+public static boolean contiene_break = false;
+public static Stack<Boolean> esta_do_until = new Stack<>();
+public static Stack<Boolean> esta_do_until_etiqueta = new Stack<>();
+public static Stack<String> etiqueta_actual = new Stack<>();
 
 public Parser(AnalizadorLexico analizadorLexico)
 {
@@ -705,6 +688,40 @@ public String ambitoReal(String nombre, String ambito){
 		posicion = lexema.lastIndexOf('.');
 	}
 	return lexema;
+}
+
+
+public void agregarInformacionBreak(String etiqueta, int posicion){
+	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(etiqueta + "." + this.ambito);
+	String pos = String.valueOf(posicion);
+	if (clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+		String atributo = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "posiciones break");
+		if (atributo.equals("-1")){
+			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "posiciones break", pos);
+		}
+		else
+			this.analizadorLexico.tablaSimbolos.agregarAtributo(clave, "posiciones break", atributo + "." + pos);
+	}
+}
+
+public void actualizarPolacaBreaks(){
+	String etiqueta = this.etiqueta_actual.pop();
+	int clave = this.analizadorLexico.tablaSimbolos.obtenerClave(etiqueta + "." + this.ambito);
+	if (clave != this.analizadorLexico.tablaSimbolos.NO_ENCONTRADO){
+		String atributo = this.analizadorLexico.tablaSimbolos.obtenerAtributo(clave, "posiciones break");
+		if (!atributo.equals("-1")){
+			int valor = -1;
+			int pos = atributo.indexOf(".");
+			while (pos != -1){
+				valor = Integer.parseInt(atributo.substring(0, pos));
+				Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, valor);
+				atributo = atributo.substring(pos+1, atributo.length());
+				pos = atributo.indexOf(".");
+			}
+			valor = Integer.parseInt(atributo);
+			Main.polaca.replaceElementIndex(Main.polaca.getSize() + 2, valor);
+		}
+	}
 }
 					
 					

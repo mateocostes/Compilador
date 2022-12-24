@@ -1,0 +1,37 @@
+prueba_nombre_programa {
+	ui16 var1, var2;
+	fun funcion1(ui16 var2) : ui16 {
+		var2 =: var2 + 1;
+		if (var2 < 6) then{
+			out('es menor a 6');
+			etiq1: do { 
+				var2 =: var2 + 1;
+				out('entro al do if');
+				break :etiq1;
+			}
+			until (var2 > 6) : (var2 =: var2 + 1);
+			out('salio del do');
+		}
+		else{
+			out('es mayor o igual a 6');
+			do { 
+				var2 =: var2 - 1;
+				out('entro al do else');
+			}
+			until (var2 < 6) : (var2 =: var2 - 1);
+		}end_if;
+		return (var2);
+	};
+	var1 =: funcion1(0);
+	if (var1 = 8) then{
+		out('es igual a 8');}
+	else{
+		out('es distinto a 8');
+	}end_if;
+	var2 =: funcion1(10);
+	if (var2 = 4) then{
+		out('es igual a 4');}
+	else{
+		out('es distinto a 4');
+	}end_if;
+}

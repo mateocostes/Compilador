@@ -8,6 +8,7 @@ public class Assembler {
     public static StringBuilder codigo = new StringBuilder();
 
     private static final Stack<String> pila_tokens = new Stack<>();
+
     private static String ultimaComparacion = "";
 
     private static int auxiliarDisponible = 0;
