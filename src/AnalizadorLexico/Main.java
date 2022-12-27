@@ -20,9 +20,10 @@ public class Main {
 	public static List<String> warnings = new ArrayList<>();
 	public static Polaca polaca = new Polaca();
 	public static Assembler assembler = new Assembler();
+	public static List<String> erroresSemanticos = new ArrayList<>();
 	
 	public static void main(String[] args) throws Exception{
-		/*//Ventana para seleccionar archivo
+		//Ventana para seleccionar archivo
 		JFileChooser ventana = new JFileChooser();
 		ventana.setDialogTitle("Elije el codigo fuente");
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("Archivo de Texto .txt","txt");
@@ -35,34 +36,27 @@ public class Main {
 		//Fin ventana para seleccionar archivo
 		
 		if (file != null) {
-			String direccion = file.getPath();*/
-			String direccion = "";
-			//Direccion Mateo PC
-			direccion = "C:\\Users\\Mateo\\Desktop\\Test.txt";
-			//Direccion Mateo Notebook
-			//direccion = "C:\\Users\\Ceres Tolvas\\Desktop\\Test.txt";
-			//Direccion Franco
-			//direccion = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\test.txt";
+			String direccion = file.getPath();
 	    	StringBuilder Codigo = manejadorArchivo.getCodigo(direccion);
 			AnalizadorLexico analizadorLexico = new AnalizadorLexico(Codigo);
 	        Parser p = new Parser(analizadorLexico);
 	        p.run();
-			System.out.println("tokensLexico");
+			System.out.println("Tokens:");
 	        for (int i=0; i<tokensLexico.size();i++)
 	        	System.out.print(tokensLexico.get(i) + " ");
 	        
 	        System.out.println();
-			System.out.println("erroresLexico");
+			System.out.println("Errores Lexicos:");
 	        for (int i=0; i<erroresLexico.size();i++) 
 	        	System.out.println(erroresLexico.get(i));
 	        
 	        System.out.println();
-			System.out.println("estructurasSintacticas");
+			System.out.println("Estructuras Sintacticas:");
 	        for (int i=0; i<estructurasSintacticas.size();i++) 
 	        	System.out.println(estructurasSintacticas.get(i));
 	        
 	        System.out.println();
-			System.out.println("erroresSintacticos");
+			System.out.println("Errores Sintacticos:");
 	        for (int i=0; i<erroresSintacticos.size();i++) 
 	        	System.out.println(erroresSintacticos.get(i));
 			
@@ -70,35 +64,37 @@ public class Main {
 			System.out.println("warnings");
 			for (int i=0; i<warnings.size();i++) 
 				System.out.println(warnings.get(i));
+
+			System.out.println();
+			System.out.println("Errores Semanticos:");
+			for (int i=0; i<erroresSemanticos.size();i++) 
+				System.out.println(erroresSemanticos.get(i));
 	        
 	        polaca.imprimirLista();
 
 			System.out.println();
 			Assembler.generarCodigo();
 			analizadorLexico.tablaSimbolos.imprimirTabla();
-			//System.out.println("Assembler: " + Assembler.codigo);
 
 			//Se genera el archivo .asm
 			try {
 				String ruta = "";
-				//Ruta mateo notebook
-				//ruta = "C:\\Users\\Ceres Tolvas\\Desktop\\Compilador\\prueba.asm";
-				ruta = "C:\\Users\\Mateo\\Desktop\\Compilador\\Codigos assembler\\anidamiento.asm";
-				//ruta = "C:\\Users\\Franco\\Desktop\\Nuevacarpeta\\repoCompi\\prueba\\error_division_cero.asm";
+				//El codigo assembler se ubica en la misma ruta donde se elige el codigo a compilar
+				ruta = direccion.substring(0, direccion.lastIndexOf(".")+1) + "asm";
 				StringBuilder contenido = Assembler.codigo;
-				File file = new File(ruta);
+				File file1 = new File(ruta);
 				// Si el archivo no existe es creado
-				if (!file.exists()) {
-					file.createNewFile();
+				if (!file1.exists()) {
+					file1.createNewFile();
 				}
-				FileWriter fw = new FileWriter(file);
+				FileWriter fw = new FileWriter(file1);
 				BufferedWriter bw = new BufferedWriter(fw);
 				bw.write(contenido.toString());
 				bw.close();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		//}       
+		}       
 	}
  }
 

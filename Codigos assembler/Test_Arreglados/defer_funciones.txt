@@ -1,0 +1,19 @@
+prueba_nombre_programa {
+	ui16 var1;
+	fun funcion1(ui16 var2) : ui16 {
+		out('funcion 1');
+		fun funcion2(ui16 var2) : ui16{
+			defer out('defer funcion2');
+			out('funcion 2');
+			return (var2);
+		};
+		var1 =: funcion2 (1);
+		defer out('defer funcion 1');
+		out('salio funcion 2');
+		return (var2);
+	};
+	var1 =: funcion1(1);
+	defer out('defer fin');
+	out('fin');
+	
+}

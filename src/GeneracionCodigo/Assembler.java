@@ -41,8 +41,7 @@ public class Assembler {
         RestructurarPolacaFunciones();
         //funcion principal que genera el codigo del programa, utilizando los tokes de la pocala y simbolos de la respectiva tabla
         for (int indice = 0; indice < Polaca.polaca.size(); indice++){
-            
-            if (Main.erroresLexico.isEmpty() && Main.erroresSintacticos.isEmpty() && !error_generacion_codigo){
+            if (Main.erroresLexico.isEmpty() && Main.erroresSintacticos.isEmpty() && Main.erroresSemanticos.isEmpty() && !error_generacion_codigo){
 
                 if ((indice == pos_start)){
                     codigo.append("start:\n");
@@ -97,6 +96,7 @@ public class Assembler {
                     case "#EJECDEFER":
                         generarCodigoEjecucionDefer(indice);
                         indice--;
+                        pos_start = pos_start -3; //Se actualiza la posicion del start sin las 3 marcas del defer
                         break;
                     case "#TOF64":
                         tipo_tof64 = true;
@@ -174,16 +174,16 @@ public class Assembler {
                     if (uso.equals("constante")) {
                         String lexema = lexema_actual;
                         lexema_actual = "@" + lexema_actual;
-                        cabecera.append(lexema_actual.replace(' ', '@')).append(" dd ").append(lexema).append("\n");
+                        cabecera.append(lexema_actual.replace(' ', '@')).append(" dw ").append(lexema).append("\n");
                     } 
                     else {
                         if (!lexema_actual.startsWith("@")) {
                             cabecera.append("_");
                         }
                         if (uso.equals("funcion"))
-                            cabecera.append(lexema_actual.replace('.', '@')).append(" dd ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
+                            cabecera.append(lexema_actual.replace('.', '@')).append(" dw ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
                         else
-                            cabecera.append(lexema_actual.replace('.', '@')).append(" dd ? \n");
+                            cabecera.append(lexema_actual.replace('.', '@')).append(" dw ? \n");
                     }   
                     break;
                 
@@ -193,13 +193,13 @@ public class Assembler {
                         if (lexema_actual.charAt(0) == '.')
                             lexema = "0" + lexema;
                         lexema_actual = "@" + lexema_actual.replace('.', '@').replace('-', '@').replace('+', '@');  //cambiamos el punto por una @ 
-                        cabecera.append(lexema_actual).append(" REAL4 ").append(lexema).append("\n");   //y agregamos el simbolo a la cabecera con REAL4
+                        cabecera.append(lexema_actual.replace(' ', '@')).append(" dq ").append(lexema).append("\n");   //y agregamos el simbolo a la cabecera con REAL4
                     } else {
                         if (! lexema_actual.startsWith("@")) {
                             cabecera.append("_");
                         }
                         if (uso.equals("funcion"))
-                            cabecera.append(lexema_actual.replace('.', '@')).append(" dd ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
+                            cabecera.append(lexema_actual.replace('.', '@')).append(" dq ").append(TablaSimbolos.obtenerClave(lexema_actual)).append("\n");
                         else
                         cabecera.append(lexema_actual.replace('.', '@')).append(" dq ?\n");
                     }   
@@ -274,11 +274,11 @@ public class Assembler {
     }
 
     private static void generarErrorInvocacion(String funcion, String funcion_actual) {
-        codigo.append("MOV EAX, ").append('_').append(funcion.replace('.', '@')).append("\n");
+        codigo.append("MOV AX, ").append('_').append(funcion.replace('.', '@')).append("\n");
         String label = "@aux" + auxiliarDisponible;
         ++auxiliarDisponible;
-        codigo.append("MOV EBX, ").append('_').append(funcion_actual.replace('.', '@')).append("\n");
-        codigo.append("CMP EBX, EAX\n");
+        codigo.append("MOV BX, ").append('_').append(funcion_actual.replace('.', '@')).append("\n");
+        codigo.append("CMP BX, AX\n");
         codigo.append("JNE ").append(label).append("\n");
         codigo.append("invoke MessageBox, NULL, addr @ERROR_INVOCACION, addr @ERROR_INVOCACION, MB_OK\n");
         codigo.append("invoke ExitProcess, 0\n");
@@ -293,74 +293,74 @@ public class Assembler {
 
         switch (operador) {
             case "+":
-                codigo.append("MOV ECX, ").append(op1).append("\n"); //muevo siempre al registro ECX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
-                codigo.append("ADD ECX, ").append(op2).append("\n");
+                codigo.append("MOV CX, ").append(op1).append("\n"); //muevo siempre al registro CX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
+                codigo.append("ADD CX, ").append(op2).append("\n");
                 aux = ocuparAuxiliar(Tipos.UI16_TYPE);
-                codigo.append("MOV ").append(aux).append(", ECX\n");
+                codigo.append("MOV ").append(aux).append(", CX\n");
                 pila_tokens.push(aux);
                 break;
             case "-":
-                codigo.append("MOV ECX, ").append(op1).append("\n"); //muevo siempre al registro ECX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
-                codigo.append("SUB ECX, ").append(op2).append("\n");
+                codigo.append("MOV CX, ").append(op1).append("\n"); //muevo siempre al registro CX ya que al usar auxiliares nunca voy a gastar mas de 1 registro, ademas este registro no es usado por las divisiones
+                codigo.append("SUB CX, ").append(op2).append("\n");
                 aux = ocuparAuxiliar(Tipos.UI16_TYPE);
-                codigo.append("CMP ").append("ECX,").append(" 00h\n"); 
+                codigo.append("CMP ").append("CX,").append(" 00h\n"); 
                 generarErrorRestaNegativa(aux);
-                codigo.append("MOV ").append(aux).append(", ECX\n");
+                codigo.append("MOV ").append(aux).append(", CX\n");
                 pila_tokens.push(aux);
                 break;
             case "*":
-                codigo.append("MOV EAX, ").append(op1).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
+                codigo.append("MOV AX, ").append(op1).append("\n"); //muevo al registro AX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
                 codigo.append("MUL ").append(op2).append("\n");
                 aux = ocuparAuxiliar(Tipos.UI16_TYPE);
-                codigo.append("MOV ").append(aux).append(", EAX\n");
+                codigo.append("MOV ").append(aux).append(", AX\n");
                 pila_tokens.push(aux);
                 break;
             case "=:":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
-                codigo.append("MOV ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); //muevo al registro AX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
+                codigo.append("MOV ").append(op1).append(", CX\n");
                 break;
             case "/":   
                 aux = ocuparAuxiliar(Tipos.UI16_TYPE);
                 codigo.append("CMP ").append(op2).append(", 00h\n"); 
                 generarErrorDivCero(aux);
-                codigo.append("MOV EAX, ").append(op1).append("\n"); //el dividendo debe estar en EAX
-                codigo.append("MOV EDX, 0").append("\n");
+                codigo.append("MOV AX, ").append(op1).append("\n"); //el dividendo debe estar en AX
+                codigo.append("MOV DX, 0").append("\n");
                 codigo.append("DIV ").append(op2).append("\n");
-                codigo.append("MOV ").append(aux).append(", EAX\n");
+                codigo.append("MOV ").append(aux).append(", AX\n");
                 pila_tokens.push(aux);
                 break;
             
             case "=":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); 
-                codigo.append("CMP ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); 
+                codigo.append("CMP ").append(op1).append(", CX\n");
                 ultimaComparacion = "JNE";
                 break;
             case "=!":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); 
-                codigo.append("CMP ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); 
+                codigo.append("CMP ").append(op1).append(", CX\n");
                 ultimaComparacion = "JE";
                 break;
             case ">=":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
-                codigo.append("CMP ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); //muevo al registro AX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
+                codigo.append("CMP ").append(op1).append(", CX\n");
                 ultimaComparacion = "JB";
                 break;
             
             case ">":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
-                codigo.append("CMP ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); //muevo al registro AX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
+                codigo.append("CMP ").append(op1).append(", CX\n");
                 ultimaComparacion = "JNA";
                 break;
             
             case "<=":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
-                codigo.append("CMP ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); //muevo al registro AX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
+                codigo.append("CMP ").append(op1).append(", CX\n");
                 ultimaComparacion = "JA";
                 break;
             
             case "<":
-                codigo.append("MOV ECX, ").append(op2).append("\n"); //muevo al registro EAX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
-                codigo.append("CMP ").append(op1).append(", ECX\n");
+                codigo.append("MOV CX, ").append(op2).append("\n"); //muevo al registro AX ya que esto es lo que dice la filmina, que siempre en las MULT tengo que usar este registro
+                codigo.append("CMP ").append(op1).append(", CX\n");
                 ultimaComparacion = "JAE";
                 break;
             
@@ -697,7 +697,7 @@ public class Assembler {
         int clave = TablaSimbolos.obtenerClave(lexema);
         if (clave != TablaSimbolos.NO_ENCONTRADO){
             String uso = TablaSimbolos.obtenerAtributo(clave, "uso");
-            if (!uso.equals("Constante")){
+            if (!uso.equals("constante")){
                 return lexema.substring(0, lexema.indexOf("."));
             }
         }

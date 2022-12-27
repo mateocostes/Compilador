@@ -4,4 +4,17 @@ Ejemplo anim-etiq: Corregido - Se acomodo la gramatica
 Ejemplo anidamiento: Corregido
 Ejemplo caso_invalido_tipos: Se corrigio el mensaje y cuando se detecta un error de tipos de aborta el programa
 Ejemplo error_fun_no_decla: El mensaje de error se muestra correctamente
-Ejemplo error_fun_redeclarada: Falta cerrar el comentario; Se agrego error de comentario no cerrado. Cerrando el comentario se muestra el error correctamente.  
+Ejemplo error_fun_redeclarada: Falta cerrar el comentario; Se agrego error de comentario no cerrado. Cerrando el comentario se muestra el error correctamente.
+
+
+Video:
+No generar codigo assembler si hay algun error - Listo - Mensaje: Se produjeron errores no se generara codigo - Listo
+Cambiar registros de 32 bits por 16 bits - ECX cambiar a CX y cambiar dd por dw - Listo
+Agregar 0 en division - Listo
+Acomodar mensaje de incompatibilidad de tipos - Listo
+Programa con error de tipos se rompe - min 43:19 - Listo
+Invocacion de funcion dentro de otra funcion - Listo
+Break do-until con y sin etiqueta - Listo - Probar caso con if y anidamiento - Listo
+Luego del error de funcion sin discard no muestra otros errores - min 1:35:07
+
+
